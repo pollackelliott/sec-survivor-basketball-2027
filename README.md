@@ -1,106 +1,199 @@
-# SEC Survivor Football 2026
+# SEC Survivor Basketball 2027
 
-A mobile-first survivor pool application for SEC college football, letting players sign up, submit weekly picks, and track live standings — fully self-service, with every eligibility rule and deadline enforced server-side rather than trusted to the browser.
+A mobile-first survivor pool application for SEC men’s college basketball. Players select one eligible SEC team each week, and that selection applies to both of the team’s conference games during the survivor week.
 
-The project demonstrates an end-to-end application built on **Supabase (PostgreSQL, Auth, Row-Level Security)** for identity and business logic, **GitHub Actions** for automated score ingestion, and a **vanilla JavaScript** front end deployed on **GitHub Pages**.
+The application is being adapted from the completed SEC Survivor Football platform, with basketball-specific scheduling, eligibility, strike tracking, elimination rules, and automated score ingestion.
 
-The application provides participants with self-serve account creation, a dynamically filtered weekly pick menu, live standings, automatic elimination tracking, and a commissioner administration panel.
-
-**Live Demo:** <https://pollackelliott.github.io/sec-survivor-football-2026>
+> Development status: In progress. The application code and database schema are being prepared before a dedicated Supabase project becomes available.
 
 ---
 
 ## Technologies
 
-**Backend & Data**
-- Supabase (PostgreSQL)
-- Supabase Auth
-- Row-Level Security (RLS)
-- PL/pgSQL (stored procedures)
+### Backend and Data
 
-**Automation**
-- GitHub Actions (scheduled workflows)
-- Python
+* Supabase PostgreSQL
+* Supabase Auth
+* Row-Level Security
+* PL/pgSQL stored procedures
 
-**Application Development**
-- JavaScript
-- HTML
-- CSS
+### Automation
 
-**Deployment**
-- GitHub Pages
+* GitHub Actions
+* Python
+* ESPN scoreboard data
 
----
+### Front End
 
-## Overview
+* JavaScript
+* HTML
+* CSS
 
-SEC Survivor Football is a season-long "survivor" pick 'em application: each week, players pick one SEC team to win outright, and a loss means elimination. Rather than a manually-maintained spreadsheet, the application runs on a real backend — player accounts, pick submission, schedule and score ingestion, and every eligibility rule are enforced by the database itself, not by client-side logic that could be bypassed.
+### Deployment
 
-The project functions as a small, fully operational multiplayer web application: real authentication, server-enforced business rules, and unattended data pipelines, rather than a static leaderboard.
+* GitHub Pages
 
 ---
 
-## Architecture
+## Game Format
 
-```
+The survivor competition lasts 10 weeks during SEC conference play.
+
+Each player:
+
+* Selects one eligible SEC team per week
+* Uses that selection for both of the team’s SEC games that week
+* Cannot select the same team more than once during the season
+* Receives a strike for a 1-1 week
+* Is eliminated by an 0-2 week
+* Is eliminated upon receiving a third total strike
+* Is eliminated for failing to submit a pick before the deadline
+
+Only teams playing the required number of SEC conference games during the survivor week are eligible.
+
+---
+
+## Week Structure
+
+A standard survivor week runs from Monday through Sunday.
+
+### Week 1
+
+Week 1 runs from Monday, December 28, 2026, through Sunday, January 3, 2027.
+
+Because SEC conference play contains only one qualifying game during that opening week:
+
+* Teams with one SEC game are eligible
+* A 1-0 result is safe
+* An 0-1 result adds one strike
+* No player can be eliminated based solely on the Week 1 game result
+* The signup and pick deadline is Saturday, January 2, 2027, at 11:00 AM Central
+
+### Weeks 2–10
+
+For each standard week:
+
+* Eligible teams must play exactly two SEC conference games
+* A 2-0 result is safe
+* A 1-1 result adds one strike
+* An 0-2 result causes immediate elimination
+* The standard pick deadline is Tuesday at 6:00 PM Central
+
+Weekly deadlines will be stored in the database so the commissioner can adjust an individual week when necessary without changing application code.
+
+---
+
+## Eligibility Rules
+
+A team is eligible only when it has the required number of SEC conference games within that Monday-through-Sunday survivor week.
+
+For Weeks 2–10:
+
+* Two SEC games: eligible
+* One SEC game and one nonconference game: not eligible
+* One SEC game only: not eligible
+* No SEC games: not eligible
+
+Each SEC team is expected to have one conference minibye during the season. A team on its minibye cannot be selected that week.
+
+Eligibility will be enforced by the database rather than trusted solely to the browser.
+
+---
+
+## Elimination Logic
+
+A player is eliminated when any of the following occurs:
+
+* The selected team finishes 0-2 during a standard week
+* The player accumulates three total strikes
+* The player fails to submit a pick before the deadline
+
+A player who enters a week with two strikes is eliminated immediately after the selected team loses its first game. Even if the team wins its second game and finishes 1-1, that result would create the player’s third strike.
+
+Eliminated players cannot submit additional picks.
+
+---
+
+## Standings
+
+Standings are ordered by:
+
+1. Active players before eliminated players
+2. Fewest strikes
+3. Last name alphabetically
+4. First name alphabetically
+
+The standings will display each player’s weekly selections, game results, strike total, and elimination status.
+
+---
+
+## Planned Architecture
+
+```text
 ESPN Scoreboard Data
         │
         ▼
-GitHub Actions (scheduled scraper)
+GitHub Actions
         │
         ▼
-Supabase (PostgreSQL)
+Supabase PostgreSQL
         │
         ▼
-Server-Side Business Logic (PL/pgSQL)
+Server-Side Business Logic
         │
         ▼
 JavaScript Front End
         │
         ▼
-GitHub Pages Deployment
+GitHub Pages
 ```
 
 ---
 
-## Features
+## Planned Database Structure
 
-### Player Accounts
+The basketball application will use its own dedicated Supabase project so that its users, authentication records, data, API credentials, and administrative settings remain completely separate from the football application.
 
-- Self-serve email/password signup (Supabase Auth)
-- Password reset via email
-- Commissioner administration mode
+Planned core entities include:
 
-### Pick Management
+* Players
+* Survivor weeks
+* Games
+* Weekly picks
+* Team eligibility
+* Strike history
+* Commissioner settings
+* Administrators
 
-- Dynamically filtered weekly pick menu, unique to each player's own history
-- Enforced pick limits: one team per season, capped non-conference and G5 selections
-- FBS-only opponent eligibility
-- Server-enforced lock times and a Saturday-morning reveal window
-
-### Live Standings
-
-- Full-season picks grid
-- Player-by-player pick history and elimination tracking
-- Weekly schedule and score view
+Season-wide and weekly configuration will be stored in database tables rather than scattered throughout the front-end code.
 
 ---
 
 ## Engineering Concepts Demonstrated
 
-- Relational schema design
-- Row-Level Security & server-side authorization
-- Stored procedures for business-rule enforcement
-- Real authentication & session management
-- Scheduled data pipelines (GitHub Actions)
-- Idempotent upserts
-- Client/server rule mirroring — UX filtering vs. actual enforcement
-- Automated, unattended data ingestion
+* Relational schema design
+* Server-enforced business rules
+* Authentication and session management
+* Row-Level Security
+* Stored procedures
+* Scheduled data ingestion
+* Idempotent database upserts
+* Time-zone-aware deadlines
+* Configurable season and weekly settings
+* Client-side UX filtering backed by database enforcement
+* Automated standings and elimination calculations
 
 ---
 
-## Future Enhancements
+## Development Plan
 
-- Expanded historical season archives
-- Additional standings visualizations
-- Notifications for approaching pick deadlines
+1. Replace football branding and documentation
+2. Create the basketball season configuration
+3. Design the basketball-specific database schema
+4. Convert the front end from 13 football weeks to 10 basketball weeks
+5. Build team eligibility and strike logic
+6. Adapt ESPN score ingestion for men’s college basketball
+7. Configure GitHub Actions
+8. Connect a dedicated Supabase project
+9. Run preseason simulations and rule testing
+10. Deploy the production application
