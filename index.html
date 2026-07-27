@@ -240,10 +240,53 @@
 
 <script>
 /* ======================== CONFIG ======================== */
-const SUPABASE_URL = 'https://zdifdapuotcxlhdglmwu.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkaWZkYXB1b3RjeGxoZGdsbXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Mzg5NjQsImV4cCI6MjA5OTExNDk2NH0.hV5WgR3Fug6oib6DE6MgAG_iSsKz-qLTu_DBmoepk_s';
-const SEASON_YEAR = 2026;
-const WEEKS = 13;
+const APP_CONFIG = {
+  app: {
+    name: 'SEC Survivor',
+    sport: 'Basketball',
+    seasonYear: 2027,
+    conference: 'SEC',
+    developmentMode: true
+  },
+
+  season: {
+    totalWeeks: 10,
+    strikeLimit: 3,
+    timezone: 'America/Chicago',
+    firstWeekStartsOn: '2026-12-28',
+    finalWeekEndsOn: '2027-03-07'
+  },
+
+  weekOne: {
+    requiredConferenceGames: 1,
+    lockAt: '2027-01-02T11:00:00-06:00',
+    scoringType: 'single_game',
+    lossResult: 'strike',
+    resultCanEliminatePlayer: false
+  },
+
+  standardWeeks: {
+    requiredConferenceGames: 2,
+    defaultLockDay: 'Tuesday',
+    defaultLockTime: '18:00',
+    scoringType: 'two_game',
+    undefeatedResult: 'safe',
+    splitResult: 'strike',
+    winlessResult: 'eliminated'
+  },
+
+  backend: {
+    enabled: false,
+    supabaseUrl: 'https://placeholder.supabase.co',
+    supabaseAnonKey: 'not-configured'
+  }
+};
+
+const SEASON_YEAR = APP_CONFIG.app.seasonYear;
+const WEEKS = APP_CONFIG.season.totalWeeks;
+const STRIKE_LIMIT = APP_CONFIG.season.strikeLimit;
+const SUPABASE_URL = APP_CONFIG.backend.supabaseUrl;
+const SUPABASE_ANON_KEY = APP_CONFIG.backend.supabaseAnonKey;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
