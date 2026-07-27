@@ -288,7 +288,9 @@ const STRIKE_LIMIT = APP_CONFIG.season.strikeLimit;
 const SUPABASE_URL = APP_CONFIG.backend.supabaseUrl;
 const SUPABASE_ANON_KEY = APP_CONFIG.backend.supabaseAnonKey;
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = APP_CONFIG.backend.enabled
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 const SEC_TEAMS = [
   'Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU',
@@ -329,16 +331,20 @@ const COMMISSIONER_EMAIL = 'pollack.elliott@gmail.com';
 // and refreshed on its own; we just read `IDENTITY` off of it.
 let IDENTITY = null; // { id } once logged in, else null
 
-sb.auth.onAuthStateChange((event, session) => {
-  if(event === 'PASSWORD_RECOVERY'){
-    showPasswordResetPanel();
-    return;
-  }
-  IDENTITY = session ? { id: session.user.id } : null;
-  if(event !== 'INITIAL_SESSION'){
-    refreshAll();
-  }
-});
+if(sb){
+  sb.auth.onAuthStateChange((event, session) => {
+    if(event === 'PASSWORD_RECOVERY'){
+      showPasswordResetPanel();
+      return;
+    }
+
+    IDENTITY = session ? { id: session.user.id } : null;
+
+    if(event !== 'INITIAL_SESSION'){
+      refreshAll();
+    }
+  });
+}
 
 /* ======================== DATA LOADING ======================== */
 let GAMES = [];           // all rows from `games`
@@ -1213,6 +1219,61 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
+function renderDevelopmentMode(){
+  document.getElementById('aliveCount').textContent = '–';
+  document.getElementById('totalCount').textContent = '/ –';
+
+  let weekHeaders = '<th class="corner">Player</th>';
+
+  for(let week = 1; week <= WEEKS; week++){
+    weekHeaders += `<th>Wk ${week}</th>`;
+  }
+
+  document.getElementById('view-grid').innerHTML = `
+    <div class="panel">
+      <h3>Basketball Application in Development</h3>
+      <p class="hint">
+        The 2027 application is currently being built without a connected backend.
+        The dedicated basketball database will be added after the football season.
+      </p>
+    </div>
+
+    <div class="grid-wrap">
+      <table class="grid">
+        <thead>
+          <tr>${weekHeaders}</tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name-cell">
+              <div class="name-inner">
+                <span class="name-text">2027 Season</span>
+              </div>
+            </td>
+            ${Array.from({ length: WEEKS }, () => '<td class="pick empty">–</td>').join('')}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('playersList').innerHTML = `
+    <div class="panel">
+      <h3>Players</h3>
+      <p class="hint">Player registration will become available when the basketball backend is connected.</p>
+    </div>
+  `;
+
+  document.getElementById('myPickPanel').innerHTML = `
+    <div class="panel">
+      <h3>My Pick</h3>
+      <p class="hint">Signup, login, and weekly pick submission are disabled during offline development.</p>
+    </div>
+  `;
+
+  document.getElementById('commishLink').style.display = 'none';
+}
+  
 /* ======================== MAIN ======================== */
 async function refreshAll(){
   await loadAll();
@@ -1227,17 +1288,20 @@ async function refreshAll(){
 }
 
 (async function init(){
+  document.getElementById('loadingMsg').style.display = 'none';
+
+  if(!APP_CONFIG.backend.enabled){
+    renderDevelopmentMode();
+    return;
+  }
+
   try{
     await refreshAll();
-    document.getElementById('loadingMsg').style.display = 'none';
   } catch(err){
     console.error(err);
-    document.getElementById('loadingMsg').style.display = 'none';
+
     const el = document.getElementById('errorMsg');
     el.style.display = 'block';
     el.textContent = 'Could not load the pool: ' + (err.message || err);
   }
 })();
-</script>
-</body>
-</html>
