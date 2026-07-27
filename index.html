@@ -411,6 +411,11 @@ let MY_PICKS = [];        // from get_my_picks(), only if IDENTITY set
 let WEEK_REOPEN_TIMES = {};
 let WEEK_DEADLINES = {};
 
+/* ==========================================================
+   DATA ACCESS
+   Reads raw data from Supabase or development fixtures.
+   ========================================================== */
+  
 async function loadAll(){
   const { data: { session } } = await sb.auth.getSession();
   IDENTITY = session ? { id: session.user.id } : null;
@@ -468,7 +473,11 @@ reopenResults.forEach((result, i) => {
   }
 }
 
-/* ---- schedule helpers (mirror the SQL logic, client-side, display-only) ---- */
+  
+/* ==========================================================
+   SURVIVOR ENGINE
+   Game rules, eligibility, scoring, deadlines, and schedule
+   ========================================================== */
 function gameFor(week, team){
   return GAMES.find(g => g.week === week && (g.home === team || g.away === team)) || null;
 }
@@ -543,8 +552,11 @@ function gamePillHTML(g){
   if(!row || !row.eligible) return '';
   return row.category === 'g5' ? '<span class="opt-tag g5">G5</span>' : '<span class="opt-tag nc">Non-Con</span>';
 }
-
-/* ======================== BUILD PLAYER MODEL ======================== */
+  
+/* ==========================================================
+   PLAYER MODEL
+   Converts raw tables into application state.
+   ========================================================== */
 function buildPlayers(){
   return PLAYERS_RAW.map(p => {
     const rows = BOARD_ROWS.filter(r => r.player_id === p.id).sort((a,b)=>a.week-b.week);
@@ -600,7 +612,10 @@ function computeCurrentWeek(){
   return w;
 }
 
-/* ======================== RENDER: GRID ======================== */
+/* ==========================================================
+   PRESENTATION
+   Rendering only. No game rules belong below this point.
+   ========================================================== */
 function renderGrid(){
   const alive = ALL_PLAYERS.filter(p=>p.alive);
   const dead = ALL_PLAYERS.filter(p=>!p.alive).sort((a,b)=>(b.eliminatedWeek||0)-(a.eliminatedWeek||0));
