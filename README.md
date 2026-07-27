@@ -1,199 +1,126 @@
-# SEC Survivor Basketball 2027
+# Survivor
 
-A mobile-first survivor pool application for SEC men’s college basketball. Players select one eligible SEC team each week, and that selection applies to both of the team’s conference games during the survivor week.
+A configurable survivor pool application supporting multiple
+conferences, sports, and seasons.
 
-The application is being adapted from the completed SEC Survivor Football platform, with basketball-specific scheduling, eligibility, strike tracking, elimination rules, and automated score ingestion.
+The project is designed around a reusable engine that powers independent
+survivor pools through configuration rather than duplicated code.
 
-> Development status: In progress. The application code and database schema are being prepared before a dedicated Supabase project becomes available.
+Current supported configurations include:
 
----
+-   SEC Football
+-   Big Ten Football
+-   SEC Basketball
+-   Big Ten Basketball
 
-## Technologies
+Each deployment supplies its own:
 
-### Backend and Data
+-   Conference
+-   Sport
+-   Season
+-   Ruleset
+-   Schedule
+-   Branding
+-   Backend configuration
 
-* Supabase PostgreSQL
-* Supabase Auth
-* Row-Level Security
-* PL/pgSQL stored procedures
+while sharing the same rendering engine, player model, and survivor
+logic.
 
-### Automation
+------------------------------------------------------------------------
 
-* GitHub Actions
-* Python
-* ESPN scoreboard data
+## Why This Project Exists
 
-### Front End
+Survivor began as a single SEC Football application built for one
+specific league. As additional pools---including Big Ten Football and
+SEC Basketball---were planned, it became clear that maintaining separate
+repositories would require duplicating nearly every feature, bug fix,
+and architectural improvement.
 
-* JavaScript
-* HTML
-* CSS
+Rather than continuing to copy and modify the same application each
+season, this project represents an ongoing refactor toward a single
+configurable survivor platform. The goal is to make each pool a
+configuration of the same application instead of an independent
+codebase.
 
-### Deployment
+From a software engineering perspective, the project focuses on reducing
+duplication, separating business rules from presentation, and designing
+extensible architecture that can support new conferences, sports, and
+rule sets with minimal code changes.
 
-* GitHub Pages
+------------------------------------------------------------------------
 
----
+## Design Goals
 
-## Game Format
+-   One codebase for every survivor pool
+-   Configuration over duplication
+-   Mobile-first interface
+-   Server-side enforcement of pool rules
+-   Conference-agnostic architecture
+-   Extensible rulesets for different sports
 
-The survivor competition lasts 10 weeks during SEC conference play.
+------------------------------------------------------------------------
 
-Each player:
+## Current Architecture
 
-* Selects one eligible SEC team per week
-* Uses that selection for both of the team’s SEC games that week
-* Cannot select the same team more than once during the season
-* Receives a strike for a 1-1 week
-* Is eliminated by an 0-2 week
-* Is eliminated upon receiving a third total strike
-* Is eliminated for failing to submit a pick before the deadline
-
-Only teams playing the required number of SEC conference games during the survivor week are eligible.
-
----
-
-## Week Structure
-
-A standard survivor week runs from Monday through Sunday.
-
-### Week 1
-
-Week 1 runs from Monday, December 28, 2026, through Sunday, January 3, 2027.
-
-Because SEC conference play contains only one qualifying game during that opening week:
-
-* Teams with one SEC game are eligible
-* A 1-0 result is safe
-* An 0-1 result adds one strike
-* No player can be eliminated based solely on the Week 1 game result
-* The signup and pick deadline is Saturday, January 2, 2027, at 11:00 AM Central
-
-### Weeks 2–10
-
-For each standard week:
-
-* Eligible teams must play exactly two SEC conference games
-* A 2-0 result is safe
-* A 1-1 result adds one strike
-* An 0-2 result causes immediate elimination
-* The standard pick deadline is Tuesday at 6:00 PM Central
-
-Weekly deadlines will be stored in the database so the commissioner can adjust an individual week when necessary without changing application code.
-
----
-
-## Eligibility Rules
-
-A team is eligible only when it has the required number of SEC conference games within that Monday-through-Sunday survivor week.
-
-For Weeks 2–10:
-
-* Two SEC games: eligible
-* One SEC game and one nonconference game: not eligible
-* One SEC game only: not eligible
-* No SEC games: not eligible
-
-Each SEC team is expected to have one conference minibye during the season. A team on its minibye cannot be selected that week.
-
-Eligibility will be enforced by the database rather than trusted solely to the browser.
-
----
-
-## Elimination Logic
-
-A player is eliminated when any of the following occurs:
-
-* The selected team finishes 0-2 during a standard week
-* The player accumulates three total strikes
-* The player fails to submit a pick before the deadline
-
-A player who enters a week with two strikes is eliminated immediately after the selected team loses its first game. Even if the team wins its second game and finishes 1-1, that result would create the player’s third strike.
-
-Eliminated players cannot submit additional picks.
-
----
-
-## Standings
-
-Standings are ordered by:
-
-1. Active players before eliminated players
-2. Fewest strikes
-3. Last name alphabetically
-4. First name alphabetically
-
-The standings will display each player’s weekly selections, game results, strike total, and elimination status.
-
----
-
-## Planned Architecture
-
-```text
-ESPN Scoreboard Data
+``` text
+Configuration
         │
         ▼
-GitHub Actions
+Data Access
         │
         ▼
-Supabase PostgreSQL
+Survivor Engine
         │
         ▼
-Server-Side Business Logic
+Player Evaluation
         │
         ▼
-JavaScript Front End
+Presentation
         │
         ▼
-GitHub Pages
+UI
 ```
 
----
+------------------------------------------------------------------------
 
-## Planned Database Structure
+## Planned Configuration Layers
 
-The basketball application will use its own dedicated Supabase project so that its users, authentication records, data, API credentials, and administrative settings remain completely separate from the football application.
+``` text
+POOL_CONFIG
+│
+├── APP_CONFIG
+├── CONFERENCE_CONFIG
+├── RULESET
+└── SEASON_CONFIG
+```
 
-Planned core entities include:
+This separation keeps permanent concepts (conference membership, sport
+rules, branding) independent from season-specific data such as
+schedules, deadlines, and backend configuration.
 
-* Players
-* Survivor weeks
-* Games
-* Weekly picks
-* Team eligibility
-* Strike history
-* Commissioner settings
-* Administrators
+------------------------------------------------------------------------
 
-Season-wide and weekly configuration will be stored in database tables rather than scattered throughout the front-end code.
+## Roadmap
 
----
+-   [x] Config-driven branding
+-   [x] Config-driven rules page
+-   [x] Configurable conference profiles
+-   [ ] Configurable rulesets
+-   [ ] Generic team-week evaluation
+-   [ ] Generic player evaluation
+-   [ ] Multiple deployment profiles
+-   [ ] Reconnect Supabase backend
+-   [ ] Production deployments
 
-## Engineering Concepts Demonstrated
+------------------------------------------------------------------------
 
-* Relational schema design
-* Server-enforced business rules
-* Authentication and session management
-* Row-Level Security
-* Stored procedures
-* Scheduled data ingestion
-* Idempotent database upserts
-* Time-zone-aware deadlines
-* Configurable season and weekly settings
-* Client-side UX filtering backed by database enforcement
-* Automated standings and elimination calculations
+## Long-Term Vision
 
----
+The long-term objective is a reusable survivor engine capable of
+powering multiple independent deployments from a shared codebase. Each
+deployment should be selectable through configuration alone, allowing
+the same application to serve different conferences, sports, and seasons
+without modifying rendering or business logic.
 
-## Development Plan
-
-1. Replace football branding and documentation
-2. Create the basketball season configuration
-3. Design the basketball-specific database schema
-4. Convert the front end from 13 football weeks to 10 basketball weeks
-5. Build team eligibility and strike logic
-6. Adapt ESPN score ingestion for men’s college basketball
-7. Configure GitHub Actions
-8. Connect a dedicated Supabase project
-9. Run preseason simulations and rule testing
-10. Deploy the production application
+Ultimately, changing from one pool to another should be as simple as
+selecting a different configuration profile.
