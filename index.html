@@ -6,13 +6,13 @@
 <title>SEC Survivor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@300;400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#0A1B3D; --bg-2:#071433; --panel:#122A5C; --panel-2:#193569; --hair:#26417E;
     --text:#F5F7FB; --text-dim:#AEBBDE; --text-faint:#6C7EAE;
-    --gold:#F2C230; --gold-dim:#4A3E17; --red:#E2685C; --red-dim:#3A1F26; --green:#5FBE8C;
+    --gold:#F2C230; --gold-dim:#4A3E17; --accent-rgb:242,194,48; --red:#E2685C; --red-dim:#3A1F26; --green:#5FBE8C;
     --radius:14px; --disp:'Raleway', sans-serif; --body:'Raleway', -apple-system, BlinkMacSystemFont, sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -21,7 +21,7 @@
   html.lock-scroll, body.lock-scroll{overflow:hidden; height:100%; overscroll-behavior:none;}
   body::before{
     content:''; position:fixed; inset:0;
-    background:radial-gradient(ellipse 900px 500px at 50% -10%, rgba(242,194,48,0.08), transparent 60%),
+    background:radial-gradient(ellipse 900px 500px at 50% -10%, rgba(var(--accent-rgb),0.08), transparent 60%),
       repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
     pointer-events:none; z-index:0;
   }
@@ -34,7 +34,7 @@
   .h-title{font-family:var(--disp); font-weight:800; font-size:16px; line-height:1.25; text-transform:uppercase; letter-spacing:.02em;}
   .h-title small{display:block; font-size:11px; font-weight:700; color:var(--text-faint); letter-spacing:.1em;}
   .h-tally{display:flex; align-items:baseline; gap:6px;}
-  .h-tally .num{font-family:var(--disp); font-weight:900; font-size:32px; color:var(--gold); text-shadow:0 0 18px rgba(242,194,48,.35);}
+  .h-tally .num{font-family:var(--disp); font-weight:900; font-size:32px; color:var(--gold); text-shadow:0 0 18px rgba(var(--accent-rgb),.35);}
   .h-tally .of{font-size:13px; font-weight:700; color:var(--text-dim);}
   .h-tally-label{font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-faint); text-align:right;}
 
@@ -60,29 +60,29 @@
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .msg{font-size:12.5px; padding:10px 12px; border-radius:8px; margin-top:10px;}
   .msg.error-msg{background:var(--red-dim); color:#f0a29c; border:1px solid rgba(226,104,92,.4);}
-  .msg.ok-msg{background:var(--gold-dim); color:var(--gold); border:1px solid rgba(242,194,48,.4);}
+  .msg.ok-msg{background:var(--gold-dim); color:var(--gold); border:1px solid rgba(var(--accent-rgb),.4);}
 
   .pick-option{display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px solid var(--hair); border-radius:10px; margin-bottom:7px; cursor:pointer; background:var(--panel-2);}
-  .pick-option.selected{border-color:var(--gold); background:rgba(242,194,48,.08);}
+  .pick-option.selected{border-color:var(--gold); background:rgba(var(--accent-rgb),.08);}
   .pick-option input{accent-color:var(--gold); width:16px; height:16px; flex:none;}
   .pick-option .team-dot{width:11px; height:11px; border-radius:50%; flex:none; background:var(--tc, var(--text-faint)); box-shadow:0 0 0 1px var(--tc2, transparent);}
   .pick-option .opt-name{flex:1; font-weight:700; font-size:14px;}
   .pick-option .opt-meta{font-size:11px; color:var(--text-faint); font-weight:600;}
   .opt-tag{font-size:9.5px; font-weight:800; letter-spacing:.05em; padding:2px 7px; border-radius:999px; text-transform:uppercase; flex:none;}
   .opt-tag.g5{background:rgba(226,104,92,.14); color:var(--red);}
-  .opt-tag.nc{background:rgba(242,194,48,.14); color:var(--gold);}
+  .opt-tag.nc{background:rgba(var(--accent-rgb),.14); color:var(--gold);}
   .allowance-row{display:flex; gap:8px; margin-bottom:14px;}
   .allowance{flex:1; background:var(--panel-2); border:1px solid var(--hair); border-radius:10px; padding:10px; text-align:center;}
   .allowance .v{font-weight:800; font-size:18px; color:var(--gold);}
   .allowance .l{font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-faint); margin-top:2px;}
-  .current-pick-banner{padding:11px 14px; border-radius:10px; background:var(--gold-dim); border:1px solid rgba(242,194,48,.4); color:var(--gold); font-size:12.5px; font-weight:700; margin-bottom:14px; text-align:center;}
+  .current-pick-banner{padding:11px 14px; border-radius:10px; background:var(--gold-dim); border:1px solid rgba(var(--accent-rgb),.4); color:var(--gold); font-size:12.5px; font-weight:700; margin-bottom:14px; text-align:center;}
   .current-pick-banner.locked{background:var(--red-dim); color:#f0a29c; border-color:rgba(226,104,92,.4);}
   .mypick-status{padding:16px; border-radius:10px; text-align:center; font-size:13.5px; font-weight:700;}
   .mypick-status.eliminated{background:var(--red-dim); color:#f0a29c; border:1px solid rgba(226,104,92,.4);}
   .mypick-status.waiting{background:var(--panel-2); color:var(--text-dim); border:1px solid var(--hair); font-weight:600;}
 
   .card{position:relative; display:flex; align-items:center; gap:12px; padding:13px 14px; background:var(--panel); border:1px solid var(--hair); border-radius:var(--radius); margin-bottom:8px; cursor:pointer;}
-  .card.alive{border-color:rgba(242,194,48,0.35);}
+  .card.alive{border-color:rgba(var(--accent-rgb),0.35);}
   .card .avatar{flex:none; width:14px;height:14px; border-radius:50%; background:var(--tc, var(--text-faint)); box-shadow:0 0 0 1px var(--tc2, transparent);}
   .card.dead .avatar{opacity:0.5;}
   .card .info{flex:1; min-width:0;}
@@ -90,13 +90,13 @@
   .card.dead .name{color:var(--text-dim);}
   .card .sub{font-size:11.5px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .card .badge{flex:none; font-size:10.5px; font-weight:700; letter-spacing:.05em; padding:4px 9px; border-radius:999px;}
-  .badge.alive{background:rgba(242,194,48,0.14); color:var(--gold); border:1px solid rgba(242,194,48,0.4);}
+  .badge.alive{background:rgba(var(--accent-rgb),0.14); color:var(--gold); border:1px solid rgba(var(--accent-rgb),0.4);}
   .badge.dead{background:rgba(226,104,92,0.1); color:var(--red); border:1px solid rgba(226,104,92,0.3);}
   .card .chev{color:var(--text-faint); font-size:16px; flex:none;}
 
   .grid-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid rgba(255,255,255,0.14); border-radius:12px;}
   table.grid{border-collapse:separate; border-spacing:0; width:max-content;}
-  table.grid thead th{position:sticky; top:0; z-index:3; background:var(--panel-2); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold); padding:11px 6px; text-align:center; border-bottom:2px solid rgba(242,194,48,0.45); font-weight:800; min-width:56px;}
+  table.grid thead th{position:sticky; top:0; z-index:3; background:var(--panel-2); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold); padding:11px 6px; text-align:center; border-bottom:2px solid rgba(var(--accent-rgb),0.45); font-weight:800; min-width:56px;}
   table.grid th.corner{position:sticky; left:0; top:0; z-index:5; background:var(--panel-2); text-align:left; padding:11px 10px; border-right:1px solid rgba(255,255,255,0.14); min-width:122px; color:var(--text);}
   table.grid td.name-cell{position:sticky; left:0; z-index:2; background:var(--panel); border-right:1px solid rgba(255,255,255,0.14); padding:8px 10px; text-align:left; min-width:122px; max-width:122px; cursor:pointer;}
   table.grid tr.dead td.name-cell{background:var(--bg-2);}
@@ -168,7 +168,7 @@
   .result-icon.loss{background:rgba(226,104,92,0.14); color:var(--red);}
   .result-icon.pending{background:var(--panel-2); color:var(--text-faint);}
   .out-banner{margin:14px 20px 0; padding:11px 14px; background:var(--red-dim); border:1px solid rgba(226,104,92,0.4); border-radius:10px; font-size:12px; color:#f0a29c; text-align:center; font-weight:700;}
-  .alive-banner{margin:14px 20px 0; padding:11px 14px; background:var(--gold-dim); border:1px solid rgba(242,194,48,0.4); border-radius:10px; font-size:12px; color:var(--gold); text-align:center; font-weight:700;}
+  .alive-banner{margin:14px 20px 0; padding:11px 14px; background:var(--gold-dim); border:1px solid rgba(var(--accent-rgb),0.4); border-radius:10px; font-size:12px; color:var(--gold); text-align:center; font-weight:700;}
   .close-btn{position:absolute; top:12px; right:14px; width:30px;height:30px; border-radius:50%; background:var(--panel); border:1px solid var(--hair); color:var(--text-dim); display:flex;align-items:center;justify-content:center; font-size:16px; cursor:pointer; z-index:2;}
 
   .admin-row{display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--hair); font-size:13px;}
@@ -218,13 +218,25 @@
 </div>
 
 <script>
-/* ======================== CONFIG ======================== */
-const APP_CONFIG = {
-  app: {
+/* ==========================================================
+   SURVIVOR
+
+   A configurable survivor-pool application supporting
+   multiple conferences, sports, seasons, and rulesets.
+
+   Current development profile:
+   SEC Basketball 2027
+   ========================================================== */
+const POOL_CONFIG = {
+  identity: {
     name: 'SEC Survivor',
     sport: 'Basketball',
     seasonYear: 2027,
     conference: 'SEC',
+    conferenceKey: 'sec'
+  },
+
+  environment: {
     developmentMode: true
   },
 
@@ -236,22 +248,24 @@ const APP_CONFIG = {
     finalWeekEndsOn: '2027-03-07'
   },
 
-  weekOne: {
-    requiredConferenceGames: 1,
-    lockAt: '2027-01-02T11:00:00-06:00',
-    scoringType: 'single_game',
-    lossResult: 'strike',
-    resultCanEliminatePlayer: false
-  },
+  rules: {
+    weekOne: {
+      requiredConferenceGames: 1,
+      lockAt: '2027-01-02T11:00:00-06:00',
+      scoringType: 'single_game',
+      lossResult: 'strike',
+      resultCanEliminatePlayer: false
+    },
 
-  standardWeeks: {
-    requiredConferenceGames: 2,
-    defaultLockDay: 'Tuesday',
-    defaultLockTime: '18:00',
-    scoringType: 'two_game',
-    undefeatedResult: 'safe',
-    splitResult: 'strike',
-    winlessResult: 'eliminated'
+    standardWeeks: {
+      requiredConferenceGames: 2,
+      defaultLockDay: 'Tuesday',
+      defaultLockTime: '18:00',
+      scoringType: 'two_game',
+      undefeatedResult: 'safe',
+      splitResult: 'strike',
+      winlessResult: 'eliminated'
+    }
   },
 
   backend: {
@@ -261,52 +275,161 @@ const APP_CONFIG = {
   }
 };
 
-const SEASON_YEAR = APP_CONFIG.app.seasonYear;
-const WEEKS = APP_CONFIG.season.totalWeeks;
-const STRIKE_LIMIT = APP_CONFIG.season.strikeLimit;
-const SUPABASE_URL = APP_CONFIG.backend.supabaseUrl;
-const SUPABASE_ANON_KEY = APP_CONFIG.backend.supabaseAnonKey;
+const CONFERENCE_PROFILES = {
+  sec: {
+    name: 'SEC',
+    theme: {
+      background: '#0A1B3D',
+      backgroundSecondary: '#071433',
+      panel: '#122A5C',
+      panelSecondary: '#193569',
+      hairline: '#26417E',
+      text: '#F5F7FB',
+      textDim: '#AEBBDE',
+      textFaint: '#6C7EAE',
+      accent: '#F2C230',
+      accentDim: '#4A3E17',
+      accentRgb: '242,194,48',
+      displayFont: "'Raleway', sans-serif",
+      bodyFont: "'Raleway', -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    teams: [
+      'Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU',
+      'Mississippi State','Missouri','Oklahoma','Ole Miss','South Carolina',
+      'Tennessee','Texas','Texas A&M','Vanderbilt'
+    ],
+    colors: {
+      'Alabama':'#9E1B32','Arkansas':'#9D2235','Auburn':'#0C2340','Florida':'#0021A5',
+      'Georgia':'#BA0C2F','Kentucky':'#0033A0','LSU':'#461D7C','Mississippi State':'#660000',
+      'Missouri':'#000000','Oklahoma':'#841617','Ole Miss':'#14213D','South Carolina':'#73000A',
+      'Tennessee':'#FF8200','Texas':'#BF5700','Texas A&M':'#500000','Vanderbilt':'#866D4B'
+    },
+    secondaryColors: {
+      'Alabama':'#FFFFFF','Arkansas':'#FFFFFF','Auburn':'#E87722','Florida':'#FA4616',
+      'Georgia':'#000000','Kentucky':'#FFFFFF','LSU':'#FDD023','Mississippi State':'#FFFFFF',
+      'Missouri':'#F1B82D','Oklahoma':'#FDF9D8','Ole Miss':'#CE1126','South Carolina':'#000000',
+      'Tennessee':'#FFFFFF','Texas':'#FFFFFF','Texas A&M':'#FFFFFF','Vanderbilt':'#000000'
+    },
+    abbreviations: {
+      'Alabama':'ALA','Arkansas':'ARK','Auburn':'AUB','Florida':'UF',
+      'Georgia':'UGA','Kentucky':'UK','LSU':'LSU','Mississippi State':'MSU',
+      'Missouri':'MIZ','Oklahoma':'OU','Ole Miss':'MISS','South Carolina':'USC',
+      'Tennessee':'TENN','Texas':'TEX','Texas A&M':'A&M','Vanderbilt':'VU'
+    },
+    displayNames: {
+      'Mississippi State': 'Miss. State',
+      'South Carolina': 'S. Carolina'
+    }
+  },
 
-const sb = APP_CONFIG.backend.enabled
+  bigTen: {
+    name: 'Big Ten',
+    theme: {
+      background: '#0088CE',
+      backgroundSecondary: '#00639B',
+      panel: '#00243A',
+      panelSecondary: '#00304C',
+      hairline: 'rgba(255,255,255,0.28)',
+      text: '#FFFFFF',
+      textDim: '#D6ECF8',
+      textFaint: '#8FC3E0',
+      accent: '#FFFFFF',
+      accentDim: '#00151F',
+      accentRgb: '255,255,255',
+      displayFont: "'League Spartan', sans-serif",
+      bodyFont: "'League Spartan', -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    teams: [
+      'Illinois','Indiana','Iowa','Maryland','Michigan','Michigan State','Minnesota',
+      'Nebraska','Northwestern','Ohio State','Oregon','Penn State','Purdue','Rutgers',
+      'UCLA','USC','Washington','Wisconsin'
+    ],
+    colors: {
+      'Illinois':'#E84A27','Indiana':'#960009','Iowa':'#FFCD00','Maryland':'#E03A3E',
+      'Michigan':'#00274C','Michigan State':'#18453B','Minnesota':'#7A0019','Nebraska':'#E41C38',
+      'Northwestern':'#4E2A84','Ohio State':'#BB0000','Oregon':'#154733','Penn State':'#041E42',
+      'Purdue':'#CEB888','Rutgers':'#CC0033','UCLA':'#2D68C4','USC':'#990000',
+      'Washington':'#4B2E83','Wisconsin':'#C5050C'
+    },
+    secondaryColors: {
+      'Illinois':'#13294B','Indiana':'#EEEDEB','Iowa':'#000000','Maryland':'#FFD520',
+      'Michigan':'#FFCB05','Michigan State':'#FFFFFF','Minnesota':'#FFCC33','Nebraska':'#FFFFFF',
+      'Northwestern':'#FFFFFF','Ohio State':'#B1B7BC','Oregon':'#FEE123','Penn State':'#FFFFFF',
+      'Purdue':'#000000','Rutgers':'#FFFFFF','UCLA':'#F2A900','USC':'#FFC72C',
+      'Washington':'#B7A57A','Wisconsin':'#FFFFFF'
+    },
+    abbreviations: {
+      'Illinois':'ILL','Indiana':'IU','Iowa':'IOWA','Maryland':'UMD',
+      'Michigan':'MICH','Michigan State':'MSU','Minnesota':'MINN','Nebraska':'NEB',
+      'Northwestern':'NU','Ohio State':'OSU','Oregon':'UO','Penn State':'PSU',
+      'Purdue':'PUR','Rutgers':'RU','UCLA':'UCLA','USC':'USC',
+      'Washington':'WASH','Wisconsin':'WISC'
+    },
+    displayNames: {}
+  }
+};
+
+const CONFERENCE_CONFIG = CONFERENCE_PROFILES[POOL_CONFIG.identity.conferenceKey];
+
+if(!CONFERENCE_CONFIG){
+  throw new Error(`Unknown conference profile: ${POOL_CONFIG.identity.conferenceKey}`);
+}
+
+const SEASON_YEAR = POOL_CONFIG.identity.seasonYear;
+const WEEKS = POOL_CONFIG.season.totalWeeks;
+const STRIKE_LIMIT = POOL_CONFIG.season.strikeLimit;
+const SUPABASE_URL = POOL_CONFIG.backend.supabaseUrl;
+const SUPABASE_ANON_KEY = POOL_CONFIG.backend.supabaseAnonKey;
+
+const sb = POOL_CONFIG.backend.enabled
   ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-const SEC_TEAMS = [
-  'Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU',
-  'Mississippi State','Missouri','Oklahoma','Ole Miss','South Carolina',
-  'Tennessee','Texas','Texas A&M','Vanderbilt'
-];
-const TEAM_COLORS = {
-  'Alabama':'#9E1B32','Arkansas':'#9D2235','Auburn':'#0C2340','Florida':'#0021A5',
-  'Georgia':'#BA0C2F','Kentucky':'#0033A0','LSU':'#461D7C','Mississippi State':'#660000',
-  'Missouri':'#000000','Oklahoma':'#841617','Ole Miss':'#14213D','South Carolina':'#73000A',
-  'Tennessee':'#FF8200','Texas':'#BF5700','Texas A&M':'#500000','Vanderbilt':'#866D4B'
-};
-const TEAM_SECONDARY_COLORS = {
-  'Alabama':'#FFFFFF','Arkansas':'#FFFFFF','Auburn':'#E87722','Florida':'#FA4616',
-  'Georgia':'#000000','Kentucky':'#FFFFFF','LSU':'#FDD023','Mississippi State':'#FFFFFF',
-  'Missouri':'#F1B82D','Oklahoma':'#FDF9D8','Ole Miss':'#CE1126','South Carolina':'#000000',
-  'Tennessee':'#FFFFFF','Texas':'#FFFFFF','Texas A&M':'#FFFFFF','Vanderbilt':'#000000'
-};
-function teamColor(name){ return TEAM_COLORS[name] || '#5d636e'; }
-function teamSecondaryColor(name){ return TEAM_SECONDARY_COLORS[name] || '#F5F7FB'; }
-const TEAM_ABBR = {
-  'Alabama':'ALA','Arkansas':'ARK','Auburn':'AUB','Florida':'UF',
-  'Georgia':'UGA','Kentucky':'UK','LSU':'LSU','Mississippi State':'MSU',
-  'Missouri':'MIZ','Oklahoma':'OU','Ole Miss':'MISS','South Carolina':'USC',
-  'Tennessee':'TENN','Texas':'TEX','Texas A&M':'A&M','Vanderbilt':'VU'
-};
-function teamAbbr(name){ return TEAM_ABBR[name] || (name ? name.slice(0,4).toUpperCase() : ''); }
-// Display-only shorthand for names too long to fit a single line in a chip —
-// every lookup/match elsewhere (classify_pick, TEAM_COLORS, GAMES rows, the
-// scraper) still uses the real "Mississippi State", only rendered text uses this.
-const TEAM_DISPLAY = { 'Mississippi State': 'Miss. State', 'South Carolina': 'S. Carolina' };
-function teamDisplay(name){ return TEAM_DISPLAY[name] || name; }
+const CONFERENCE_TEAMS = CONFERENCE_CONFIG.teams;
+
+function teamColor(name){
+  return CONFERENCE_CONFIG.colors[name] || '#5d636e';
+}
+
+function teamSecondaryColor(name){
+  return CONFERENCE_CONFIG.secondaryColors[name] || '#F5F7FB';
+}
+
+function teamAbbr(name){
+  return CONFERENCE_CONFIG.abbreviations[name] || (name ? name.slice(0, 4).toUpperCase() : '');
+}
+
+function teamDisplay(name){
+  return CONFERENCE_CONFIG.displayNames[name] || name;
+}
+
 const COMMISSIONER_EMAIL = 'pollack.elliott@gmail.com';
+
+function applyConferenceTheme(){
+  const theme = CONFERENCE_CONFIG.theme;
+  const root = document.documentElement;
+
+  root.style.setProperty('--bg', theme.background);
+  root.style.setProperty('--bg-2', theme.backgroundSecondary);
+  root.style.setProperty('--panel', theme.panel);
+  root.style.setProperty('--panel-2', theme.panelSecondary);
+  root.style.setProperty('--hair', theme.hairline);
+  root.style.setProperty('--text', theme.text);
+  root.style.setProperty('--text-dim', theme.textDim);
+  root.style.setProperty('--text-faint', theme.textFaint);
+  root.style.setProperty('--gold', theme.accent);
+  root.style.setProperty('--gold-dim', theme.accentDim);
+  root.style.setProperty('--accent-rgb', theme.accentRgb);
+  root.style.setProperty('--disp', theme.displayFont);
+  root.style.setProperty('--body', theme.bodyFont);
+}
+
 function initializeAppBranding(){
-  const appName = APP_CONFIG.app.name;
-  const sport = APP_CONFIG.app.sport;
-  const seasonYear = APP_CONFIG.app.seasonYear;
+  applyConferenceTheme();
+
+  const appName = POOL_CONFIG.identity.name;
+  const sport = POOL_CONFIG.identity.sport;
+  const seasonYear = POOL_CONFIG.identity.seasonYear;
 
   document.title = `${appName} — ${sport} ${seasonYear}`;
   document.getElementById('appTitle').textContent = appName.toUpperCase();
@@ -314,7 +437,7 @@ function initializeAppBranding(){
 }
 function formatCentralDateTime(dateString){
   return new Intl.DateTimeFormat('en-US', {
-    timeZone: APP_CONFIG.season.timezone,
+    timeZone: POOL_CONFIG.season.timezone,
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -336,25 +459,26 @@ function formatHourMinute(time){
 }
 
 function renderRules(){
-  const { app, season, weekOne, standardWeeks } = APP_CONFIG;
+  const { identity, season, rules } = POOL_CONFIG;
+  const { weekOne, standardWeeks } = rules;
 
   document.getElementById('rulesPanel').innerHTML = `
     <div class="panel">
-      <h3>${app.name} — ${app.sport}</h3>
+      <h3>${identity.name} — ${identity.sport}</h3>
 
       <div class="current-pick-banner" style="text-align:center; margin-top:12px;">
         Email ${COMMISSIONER_EMAIL} if you have any questions
       </div>
 
       <p class="hint" style="margin-top:16px;">
-        The official ${app.seasonYear} basketball rules are being finalized as the application is rebuilt.
+        The official ${identity.seasonYear} ${identity.sport.toLowerCase()} rules are being finalized as the application is rebuilt.
       </p>
 
       <div class="field"><label>Season Structure</label></div>
 
       <ul style="margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.6;">
         <li>The season will contain <strong>${season.totalWeeks} weekly rounds</strong>.</li>
-        <li>Players will select one ${app.conference} basketball team each week.</li>
+        <li>Players will select one ${CONFERENCE_CONFIG.name} basketball team each week.</li>
         <li>Each selected team must satisfy that week's eligibility requirements.</li>
         <li>Teams cannot be reused after they have been selected.</li>
       </ul>
@@ -478,7 +602,58 @@ reopenResults.forEach((result, i) => {
    SURVIVOR ENGINE
    Game rules, eligibility, scoring, deadlines, and schedule
    ========================================================== */
- function getTeamWeekContext(week, team){
+function gamesForTeam(week, team){
+  return GAMES.filter(
+    game =>
+      game.week === week &&
+      (game.home === team || game.away === team)
+  );
+}
+
+function firstGameForTeam(week, team){
+  return gamesForTeam(week, team)[0] || null;
+}
+
+function opponentOf(week, team){
+  const game = firstGameForTeam(week, team);
+
+  if(!game){
+    return null;
+  }
+
+  return game.home === team ? game.away : game.home;
+}
+
+function resultForGame(game, team){
+  if(!game || !game.winner){
+    return null;
+  }
+
+  return game.winner === team ? 1 : 0;
+}
+
+function weekDeadline(week){
+  return WEEK_DEADLINES[week] || null;
+}
+
+function weekReopenTime(week){
+  return WEEK_REOPEN_TIMES[week] || null;
+}
+
+function pickEditableUntilGame(week, game){
+  if(!game){
+    return null;
+  }
+
+  const deadline = weekDeadline(week);
+  const gameTime = new Date(game.kickoff_at);
+
+  return deadline && deadline < gameTime
+    ? deadline
+    : gameTime;
+}
+
+function getTeamWeekContext(week, team){
   const games = gamesForTeam(week, team);
 
   if(games.length === 0){
@@ -487,11 +662,10 @@ reopenResults.forEach((result, i) => {
 
   const gameContexts = games.map(game => {
     const isHome = game.home === team;
-    const opponent = isHome ? game.away : game.home;
 
     return {
       game,
-      opponent,
+      opponent: isHome ? game.away : game.home,
       location: isHome ? 'home' : 'away',
       result: resultForGame(game, team),
       editableUntil: pickEditableUntilGame(week, game)
@@ -505,64 +679,44 @@ reopenResults.forEach((result, i) => {
     gameCount: gameContexts.length
   };
 }
-function gamesForTeam(week, team){
-  return GAMES.filter(
-    game =>
-      game.week === week &&
-      (game.home === team || game.away === team)
-  );
-}
-  function firstGameForTeam(week, team){
-  return gamesForTeam(week, team)[0] || null;
-}
-function opponentOf(week, team){
-  const game = firstGameForTeam(week, team);
 
-  if(!game){
-    return null;
-  }
+/*
+  Temporary compatibility wrappers.
 
-  return game.home === team ? game.away : game.home;
-}
-  function resultForGame(game, team){
-  if(!game || !game.winner){
-    return null;
-  }
-
-  return game.winner === team ? 1 : 0;
-}
-
+  Several inherited football-oriented callers still expect one opponent
+  and one result per week. They deliberately use the first scheduled game
+  until those callers are migrated to the full team-week evaluation.
+*/
 function pickEditableUntil(week, team){
   const game = firstGameForTeam(week, team);
   return pickEditableUntilGame(week, game);
 }
-function classifyPick(week, team){
-  const opp = opponentOf(week, team);
-  if(!opp) return 'invalid';
-  if(SEC_TEAMS.includes(opp)) return 'conference';
-  const row = CLASSIFICATION[opp];
-  if(!row || !row.eligible) return 'ineligible';
-  return row.category; // 'g5' | 'not_g5'
-}
-function weekDeadline(week){
-  return WEEK_DEADLINES[week] || null;
-}
-// Mirrors week_reopen_time() in the DB: the Sunday 5:00am Central following
-// a week's own Saturday deadline — when the NEXT week's picks open.
-function weekReopenTime(week){
-  return WEEK_REOPEN_TIMES[week] || null;
-}
-function pickEditableUntil(week, team){
-  const g = gameFor(week, team);
-  if(!g) return null;
-  const wd = weekDeadline(week);
-  const ko = new Date(g.kickoff_at);
-  return (wd && wd < ko) ? wd : ko;
-}
+
 function resultFor(week, team){
   const game = firstGameForTeam(week, team);
   return resultForGame(game, team);
 }
+
+function classifyPick(week, team){
+  const opponent = opponentOf(week, team);
+
+  if(!opponent){
+    return 'invalid';
+  }
+
+  if(CONFERENCE_TEAMS.includes(opponent)){
+    return 'conference';
+  }
+
+  const row = CLASSIFICATION[opponent];
+
+  if(!row || !row.eligible){
+    return 'ineligible';
+  }
+
+  return row.category;
+}
+
 function opponentContextHTML(week, team){
   const context = getTeamWeekContext(week, team);
 
@@ -575,38 +729,57 @@ function opponentContextHTML(week, team){
     return `<span class="opponent-context">(${prefix} ${opponent})</span>`;
   }).join(' ');
 }
-// 'opp-sec' | 'opp-noncon' | 'opp-ineligible' — purely a display designation
-// for the week schedule view. SEC teams get their own brand color (applied
-// separately, since it's per-team, not a shared class); any eligible
-// non-conference opponent is plain white (the G5-vs-not distinction lives
-// in the game's pill, not the team-name color); non-FBS opponents are grey,
-// and their whole game row gets dimmed.
+
 function teamCategoryClass(team){
-  if(SEC_TEAMS.includes(team)) return 'opp-sec';
+  if(CONFERENCE_TEAMS.includes(team)){
+    return 'opp-sec';
+  }
+
   const row = CLASSIFICATION[team];
-  if(!row || !row.eligible) return 'opp-ineligible';
+
+  if(!row || !row.eligible){
+    return 'opp-ineligible';
+  }
+
   return 'opp-noncon';
 }
-// The non-SEC side of a matchup, or null for a conference (SEC-vs-SEC) game.
-function nonSecSideOf(g){
-  const awaySec = SEC_TEAMS.includes(g.away), homeSec = SEC_TEAMS.includes(g.home);
-  if(awaySec && homeSec) return null;
-  return awaySec ? g.home : g.away;
+
+function nonConferenceSideOf(game){
+  const awayIsConference = CONFERENCE_TEAMS.includes(game.away);
+  const homeIsConference = CONFERENCE_TEAMS.includes(game.home);
+
+  if(awayIsConference && homeIsConference){
+    return null;
+  }
+
+  return awayIsConference ? game.home : game.away;
 }
-function gameIsIneligible(g){
-  const opp = nonSecSideOf(g);
-  return opp ? (!CLASSIFICATION[opp] || !CLASSIFICATION[opp].eligible) : false;
+
+function gameIsIneligible(game){
+  const opponent = nonConferenceSideOf(game);
+  return opponent
+    ? (!CLASSIFICATION[opponent] || !CLASSIFICATION[opponent].eligible)
+    : false;
 }
-// The pill shown to the right of a game row: G5 / Non-Con / nothing for a
-// conference or FCS matchup (mirrors the exact same pills used on the pick menu).
-function gamePillHTML(g){
-  const opp = nonSecSideOf(g);
-  if(!opp) return '';
-  const row = CLASSIFICATION[opp];
-  if(!row || !row.eligible) return '';
-  return row.category === 'g5' ? '<span class="opt-tag g5">G5</span>' : '<span class="opt-tag nc">Non-Con</span>';
+
+function gamePillHTML(game){
+  const opponent = nonConferenceSideOf(game);
+
+  if(!opponent){
+    return '';
+  }
+
+  const row = CLASSIFICATION[opponent];
+
+  if(!row || !row.eligible){
+    return '';
+  }
+
+  return row.category === 'g5'
+    ? '<span class="opt-tag g5">G5</span>'
+    : '<span class="opt-tag nc">Non-Con</span>';
 }
-  
+
 /* ==========================================================
    PLAYER MODEL
    Converts raw tables into application state.
@@ -824,7 +997,7 @@ function openWeekSheet(week){
   }
 
   const conferenceSortName = (g) => {
-    const awayConf = SEC_TEAMS.includes(g.away), homeConf = SEC_TEAMS.includes(g.home);
+    const awayConf = CONFERENCE_TEAMS.includes(g.away), homeConf = CONFERENCE_TEAMS.includes(g.home);
     if (awayConf && homeConf) return g.away < g.home ? g.away : g.home;
     return awayConf ? g.away : g.home;
   };
@@ -862,7 +1035,7 @@ function openWeekSheet(week){
         if(played){
           return `<span class="game-team-name">${team}</span>`;
         }
-        if(SEC_TEAMS.includes(team)){
+        if(CONFERENCE_TEAMS.includes(team)){
           return `<span class="game-team-name sec-chip" style="background:${teamColor(team)}; color:${teamSecondaryColor(team)}">${teamDisplay(team)}</span>`;
         }
         return `<span class="game-team-name ${teamCategoryClass(team)}">${team}</span>`;
@@ -1037,9 +1210,9 @@ function renderPickOptionsFor(week, usedTeams, nonConLeft, g5Left){
   const options = [];
   weekGames.forEach(g => {
     [g.home, g.away].forEach(team => {
-      if(!SEC_TEAMS.includes(team)) return;
+      if(!CONFERENCE_TEAMS.includes(team)) return;
       if(usedTeams.has(team) && !(existing && existing.team === team)) return;
-      const context = getGameContext(week, team);
+      const context = getTeamWeekContext(week, team);
 
 if(!context){
   return;
@@ -1115,8 +1288,8 @@ function renderSignupForm(){
     return `<div class="panel"><h3>Signups are closed</h3><p class="hint">Week 1 has locked. If you're a returning player, log in below.</p>${loginFormHTML()}</div>`;
   }
   const week1Games = GAMES.filter(g => g.week === 1);
-  const options = week1Games.filter(g => SEC_TEAMS.includes(g.home) || SEC_TEAMS.includes(g.away))
-    .flatMap(g => [g.home, g.away].filter(t => SEC_TEAMS.includes(t)).map(t => ({ team: t, opp: opponentOf(1, t) })))
+  const options = week1Games.filter(g => CONFERENCE_TEAMS.includes(g.home) || CONFERENCE_TEAMS.includes(g.away))
+    .flatMap(g => [g.home, g.away].filter(t => CONFERENCE_TEAMS.includes(t)).map(t => ({ team: t, opp: opponentOf(1, t) })))
     .filter(o => { const c = classifyPick(1, o.team); return c !== 'ineligible' && c !== 'invalid'; });
 
   return `<div class="panel">
@@ -1125,10 +1298,10 @@ function renderSignupForm(){
     <div class="field"><label>Your Name</label><input type="text" id="suName" placeholder="e.g. Luther Burden"></div>
     <div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="trumanthetiger@gmail.com"></div>
     <div class="field"><label>Password</label><input type="password" id="suPassword" placeholder="Choose a password"></div>
-    <div class="field"><label>Favorite SEC Team (optional)</label>
+    <div class="field"><label>Favorite ${CONFERENCE_CONFIG.name} Team (optional)</label>
       <select id="suFanOf" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--hair); border-radius:8px; color:var(--text); font-size:14.5px;">
         <option value="">No favorite</option>
-        ${SEC_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('')}
+        ${CONFERENCE_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('')}
       </select>
     </div>
     <div class="field"><label>Week 1 Pick</label>
@@ -1333,7 +1506,7 @@ async function openAdminSheet(){
   const { data, error } = await sb.rpc('admin_get_all_picks');
   if(error){ alert('Not authorized as commissioner: ' + error.message); return; }
   const rows = data || [];
-  const allTeams = SEC_TEAMS;
+  const allTeams = CONFERENCE_TEAMS;
   document.getElementById('sheetContent').innerHTML = `
     <div class="sheet-head"><div class="name">Commissioner</div></div>
     <div class="week-section"><h3>All Picks</h3>
@@ -1445,7 +1618,7 @@ async function refreshAll(){
   renderRules();
   document.getElementById('loadingMsg').style.display = 'none';
 
-  if(!APP_CONFIG.backend.enabled){
+  if(!POOL_CONFIG.backend.enabled){
     renderDevelopmentMode();
     return;
   }
