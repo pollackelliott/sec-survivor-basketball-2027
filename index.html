@@ -278,6 +278,7 @@ function teamAbbr(name){ return TEAM_ABBR[name] || (name ? name.slice(0,4).toUpp
 // scraper) still uses the real "Mississippi State", only rendered text uses this.
 const TEAM_DISPLAY = { 'Mississippi State': 'Miss. State', 'South Carolina': 'S. Carolina' };
 function teamDisplay(name){ return TEAM_DISPLAY[name] || name; }
+const COMMISSIONER_EMAIL = 'pollack.elliott@gmail.com';
 
 /* ======================== IDENTITY ======================== */
 // Identity is now a real Supabase Auth session — no homegrown tokens, no
@@ -691,12 +692,8 @@ function openWeekSheet(week){
   }
   gamesHTML += '</div>';
 
-  const revealNote = !revealed
-    ? `<div class="empty" style="padding:10px 0 4px;">Picks reveal Saturday at 11:00</div>`
-    : '';
-
   document.getElementById('sheetContent').innerHTML =
-    `<div class="sheet-head"><div class="name">Week ${week}</div></div>${picksHTML}${gamesHTML}${revealNote}`;
+    `<div class="sheet-head"><div class="name">Week ${week}</div></div>${picksHTML}${gamesHTML}`;
   showSheet();
 }
 
@@ -1085,14 +1082,38 @@ document.getElementById('closeSheet').addEventListener('click', closeSheet);
 /* ======================== COMMISSIONER MODE ======================== */
 document.getElementById('commishLink').addEventListener('click', async () => {
   const { data: { session } } = await sb.auth.getSession();
-  if(session){ openAdminSheet(); return; }
+
+  if(session){
+    const loggedInEmail = session.user.email?.toLowerCase();
+
+    if(loggedInEmail === COMMISSIONER_EMAIL.toLowerCase()){
+      openAdminSheet();
+    }
+
+    return;
+  }
+
   const email = prompt('Commissioner email:');
   if(!email) return;
+
   const password = prompt('Password:');
   if(!password) return;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ alert('Sign-in failed: ' + error.message); return; }
-  openAdminSheet();
+
+  const { data, error } = await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    alert('Sign-in failed: ' + error.message);
+    return;
+  }
+
+  const signedInEmail = data.user?.email?.toLowerCase();
+
+  if(signedInEmail === COMMISSIONER_EMAIL.toLowerCase()){
+    openAdminSheet();
+  }
 });
 
 async function openAdminSheet(){
