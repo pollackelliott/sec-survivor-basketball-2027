@@ -478,6 +478,33 @@ reopenResults.forEach((result, i) => {
    SURVIVOR ENGINE
    Game rules, eligibility, scoring, deadlines, and schedule
    ========================================================== */
+  function getGameContext(week, team){
+  const game = gameFor(week, team);
+
+  if(!game){
+    return null;
+  }
+
+  const opponent =
+    game.home === team
+      ? game.away
+      : game.home;
+
+  const category = classifyPick(week, team);
+
+  const result = resultFor(week, team);
+
+  const editableUntil = pickEditableUntil(week, team);
+
+  return {
+    game,
+    team,
+    opponent,
+    category,
+    result,
+    editableUntil
+  };
+}
 function gameFor(week, team){
   return GAMES.find(g => g.week === week && (g.home === team || g.away === team)) || null;
 }
@@ -515,7 +542,11 @@ function resultFor(week, team){
   return g.winner === team ? 1 : 0;
 }
 function opponentContextHTML(week, team){
-  const g = gameFor(week, team);
+  const context = getGameContext(week, team);
+  if(!context){
+    return '';
+  }
+  const g = context.game;
   if(!g) return '';
   const isAway = g.away === team;
   const opponent = isAway ? g.home : g.away;
@@ -985,11 +1016,17 @@ function renderPickOptionsFor(week, usedTeams, nonConLeft, g5Left){
     [g.home, g.away].forEach(team => {
       if(!SEC_TEAMS.includes(team)) return;
       if(usedTeams.has(team) && !(existing && existing.team === team)) return;
-      const cat = classifyPick(week, team);
+      const context = getGameContext(week, team);
+
+if(!context){
+  return;
+}
+
+const cat = context.category;
       if(cat === 'ineligible' || cat === 'invalid') return;
       if((cat === 'g5' || cat === 'not_g5') && nonConLeft <= 0 && !(existing && existing.team === team)) return;
       if(cat === 'g5' && g5Left <= 0 && !(existing && existing.team === team)) return;
-      const editableUntil = pickEditableUntil(week, team);
+      const editableUntil = context.editableUntil;
       if(editableUntil && editableUntil <= now) return;
       options.push({ team, opp: opponentOf(week, team), cat, editableUntil });
     });
