@@ -478,40 +478,63 @@ reopenResults.forEach((result, i) => {
    SURVIVOR ENGINE
    Game rules, eligibility, scoring, deadlines, and schedule
    ========================================================== */
-  function getGameContext(week, team){
-  const game = gameFor(week, team);
+ function getTeamWeekContext(week, team){
+  const games = gamesForTeam(week, team);
+
+  if(games.length === 0){
+    return null;
+  }
+
+  const gameContexts = games.map(game => {
+    const isHome = game.home === team;
+    const opponent = isHome ? game.away : game.home;
+
+    return {
+      game,
+      opponent,
+      location: isHome ? 'home' : 'away',
+      result: resultForGame(game, team),
+      editableUntil: pickEditableUntilGame(week, game)
+    };
+  });
+
+  return {
+    week,
+    team,
+    games: gameContexts,
+    gameCount: gameContexts.length
+  };
+}
+function gamesForTeam(week, team){
+  return GAMES.filter(
+    game =>
+      game.week === week &&
+      (game.home === team || game.away === team)
+  );
+}
+  function firstGameForTeam(week, team){
+  return gamesForTeam(week, team)[0] || null;
+}
+function opponentOf(week, team){
+  const game = firstGameForTeam(week, team);
 
   if(!game){
     return null;
   }
 
-  const opponent =
-    game.home === team
-      ? game.away
-      : game.home;
-
-  const category = classifyPick(week, team);
-
-  const result = resultFor(week, team);
-
-  const editableUntil = pickEditableUntil(week, team);
-
-  return {
-    game,
-    team,
-    opponent,
-    category,
-    result,
-    editableUntil
-  };
+  return game.home === team ? game.away : game.home;
 }
-function gameFor(week, team){
-  return GAMES.find(g => g.week === week && (g.home === team || g.away === team)) || null;
+  function resultForGame(game, team){
+  if(!game || !game.winner){
+    return null;
+  }
+
+  return game.winner === team ? 1 : 0;
 }
-function opponentOf(week, team){
-  const g = gameFor(week, team);
-  if(!g) return null;
-  return g.home === team ? g.away : g.home;
+
+function pickEditableUntil(week, team){
+  const game = firstGameForTeam(week, team);
+  return pickEditableUntilGame(week, game);
 }
 function classifyPick(week, team){
   const opp = opponentOf(week, team);
@@ -537,20 +560,20 @@ function pickEditableUntil(week, team){
   return (wd && wd < ko) ? wd : ko;
 }
 function resultFor(week, team){
-  const g = gameFor(week, team);
-  if(!g || !g.winner) return null;
-  return g.winner === team ? 1 : 0;
+  const game = firstGameForTeam(week, team);
+  return resultForGame(game, team);
 }
 function opponentContextHTML(week, team){
-  const context = getGameContext(week, team);
+  const context = getTeamWeekContext(week, team);
+
   if(!context){
     return '';
   }
-  const g = context.game;
-  if(!g) return '';
-  const isAway = g.away === team;
-  const opponent = isAway ? g.home : g.away;
-  return `<span class="opponent-context">(${isAway ? '@' : 'vs.'} ${opponent})</span>`;
+
+  return context.games.map(({ opponent, location }) => {
+    const prefix = location === 'away' ? '@' : 'vs.';
+    return `<span class="opponent-context">(${prefix} ${opponent})</span>`;
+  }).join(' ');
 }
 // 'opp-sec' | 'opp-noncon' | 'opp-ineligible' — purely a display designation
 // for the week schedule view. SEC teams get their own brand color (applied
@@ -1022,13 +1045,31 @@ if(!context){
   return;
 }
 
-const cat = context.category;
+const cat = classifyPick(week, team);
       if(cat === 'ineligible' || cat === 'invalid') return;
       if((cat === 'g5' || cat === 'not_g5') && nonConLeft <= 0 && !(existing && existing.team === team)) return;
       if(cat === 'g5' && g5Left <= 0 && !(existing && existing.team === team)) return;
-      const editableUntil = context.editableUntil;
+      const editableUntil = context.games.reduce((earliest, item) => {
+  if(!item.editableUntil){
+    return earliest;
+  }
+
+  if(!earliest || item.editableUntil < earliest){
+    return item.editableUntil;
+  }
+
+  return earliest;
+}, null);
       if(editableUntil && editableUntil <= now) return;
-      options.push({ team, opp: opponentOf(week, team), cat, editableUntil });
+      options.push({
+  team,
+  opponents: context.games.map(item => ({
+    name: item.opponent,
+    location: item.location
+  })),
+  cat,
+  editableUntil
+});
     });
   });
   
@@ -1042,7 +1083,11 @@ const cat = context.category;
   container.insertAdjacentHTML('beforeend', options.map(o => `
     <label class="pick-option ${existing && existing.team===o.team ? 'selected':''}">
       <input type="radio" name="pickteam" value="${o.team}" ${existing && existing.team===o.team ? 'checked':''}>
-      <div class="opt-name"><span class="game-team-name sec-chip" style="background:${teamColor(o.team)}; color:${teamSecondaryColor(o.team)}">${teamDisplay(o.team)}</span> <span class="opt-meta">vs ${o.opp}</span></div>
+      <div class="opt-name"><span class="game-team-name sec-chip" style="background:${teamColor(o.team)}; color:${teamSecondaryColor(o.team)}">${teamDisplay(o.team)}</span> <span class="opt-meta">${
+  o.opponents.map(opponent =>
+    `${opponent.location === 'away' ? '@' : 'vs'} ${opponent.name}`
+  ).join(' · ')
+}</span></div>
       ${o.cat==='g5' ? '<span class="opt-tag g5">G5</span>' : ''}
       ${o.cat==='not_g5' ? '<span class="opt-tag nc">Non-Con</span>' : ''}
     </label>`).join('') +
