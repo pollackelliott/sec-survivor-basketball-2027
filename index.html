@@ -204,43 +204,7 @@
     <div class="view" id="view-players"><div id="playersList"></div></div>
     <div class="view" id="view-mypick"><div id="myPickPanel"></div></div>
     <div class="view" id="view-rules">
-  <div class="panel">
-    <h3 id="rulesTitle">SEC Survivor Basketball</h3>
-
-    <div class="current-pick-banner" style="text-align:center; margin-top:12px;">
-      Email pollack.elliott@gmail.com if you have any questions
-    </div>
-
-    <p class="hint" style="margin-top:16px;">
-      The official 2027 basketball rules are being finalized as the application is rebuilt.
-    </p>
-
-    <div class="field"><label>Season Structure</label></div>
-
-    <ul style="margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.6;">
-      <li>The season will contain <strong>10 weekly rounds</strong>.</li>
-      <li>Players will select one SEC basketball team each week.</li>
-      <li>Each selected team must satisfy that week's eligibility requirements.</li>
-      <li>Teams cannot be reused after they have been selected.</li>
-    </ul>
-
-    <div class="field"><label>Weekly Results</label></div>
-
-    <ul style="margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.6;">
-      <li>Week 1 will use a special one-game format.</li>
-      <li>Standard weeks will evaluate two conference games played by the selected team.</li>
-      <li>Weekly results may be safe, earn a strike, or eliminate the player.</li>
-      <li>Players are also eliminated after <strong>three strikes</strong>.</li>
-    </ul>
-
-    <div class="field"><label>Deadlines</label></div>
-
-    <ul style="margin:0; padding-left:18px; font-size:14px; line-height:1.6;">
-      <li>Week 1 is currently scheduled to lock Saturday, January 2, 2027 at 11:00am Central.</li>
-      <li>Standard weekly picks are expected to lock Tuesday evening.</li>
-      <li>Exact deadlines and exception rules will be displayed after the basketball schedule is loaded.</li>
-    </ul>
-  </div>
+  <div id="rulesPanel"></div>
 </div>
   </main>
 
@@ -347,7 +311,74 @@ function initializeAppBranding(){
   document.title = `${appName} — ${sport} ${seasonYear}`;
   document.getElementById('appTitle').textContent = appName.toUpperCase();
   document.getElementById('appSubtitle').textContent = `${sport.toUpperCase()} — ${seasonYear}`;
-  document.getElementById('rulesTitle').textContent = `${appName} — ${sport}`;
+}
+function formatCentralDateTime(dateString){
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: APP_CONFIG.season.timezone,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(new Date(dateString));
+}
+
+function formatHourMinute(time){
+  const [hour, minute] = time.split(':').map(Number);
+  const date = new Date(2000, 0, 1, hour, minute);
+
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date);
+}
+
+function renderRules(){
+  const { app, season, weekOne, standardWeeks } = APP_CONFIG;
+
+  document.getElementById('rulesPanel').innerHTML = `
+    <div class="panel">
+      <h3>${app.name} — ${app.sport}</h3>
+
+      <div class="current-pick-banner" style="text-align:center; margin-top:12px;">
+        Email ${COMMISSIONER_EMAIL} if you have any questions
+      </div>
+
+      <p class="hint" style="margin-top:16px;">
+        The official ${app.seasonYear} basketball rules are being finalized as the application is rebuilt.
+      </p>
+
+      <div class="field"><label>Season Structure</label></div>
+
+      <ul style="margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.6;">
+        <li>The season will contain <strong>${season.totalWeeks} weekly rounds</strong>.</li>
+        <li>Players will select one ${app.conference} basketball team each week.</li>
+        <li>Each selected team must satisfy that week's eligibility requirements.</li>
+        <li>Teams cannot be reused after they have been selected.</li>
+      </ul>
+
+      <div class="field"><label>Weekly Results</label></div>
+
+      <ul style="margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.6;">
+        <li>Week 1 will evaluate <strong>${weekOne.requiredConferenceGames} conference game</strong> played by the selected team.</li>
+        <li>Standard weeks will evaluate <strong>${standardWeeks.requiredConferenceGames} conference games</strong> played by the selected team.</li>
+        <li>An undefeated standard week is safe.</li>
+        <li>A split standard week results in one strike.</li>
+        <li>A winless standard week eliminates the player immediately.</li>
+        <li>Players are also eliminated after <strong>${season.strikeLimit} strikes</strong>.</li>
+      </ul>
+
+      <div class="field"><label>Deadlines</label></div>
+
+      <ul style="margin:0; padding-left:18px; font-size:14px; line-height:1.6;">
+        <li>Week 1 is scheduled to lock <strong>${formatCentralDateTime(weekOne.lockAt)}</strong>.</li>
+        <li>Standard weekly picks are expected to lock each <strong>${standardWeeks.defaultLockDay} at ${formatHourMinute(standardWeeks.defaultLockTime)} Central</strong>.</li>
+        <li>Exact deadlines and exception rules will be displayed after the basketball schedule is loaded.</li>
+      </ul>
+    </div>
+  `;
 }
 
 /* ======================== IDENTITY ======================== */
@@ -1314,6 +1345,7 @@ async function refreshAll(){
 
 (async function init(){
   initializeAppBranding();
+  renderRules();
   document.getElementById('loadingMsg').style.display = 'none';
 
   if(!APP_CONFIG.backend.enabled){
