@@ -1,0 +1,1 @@
+window.RULESET_REGISTRY = window.RULESET_REGISTRY || {};
