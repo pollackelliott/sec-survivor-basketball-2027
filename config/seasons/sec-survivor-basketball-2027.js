@@ -14,7 +14,6 @@ window.SEASON_PROFILES.secBasketball2027 = {
   identity: {
     key: 'secBasketball2027',
     name: 'SEC Survivor',
-    sport: 'Basketball',
     sportKey: 'basketball',
     seasonYear: 2027,
     conference: 'SEC',
