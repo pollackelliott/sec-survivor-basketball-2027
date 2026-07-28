@@ -339,9 +339,75 @@ if(!CONFERENCE_CONFIG){
 const SEASON_YEAR = POOL_CONFIG.identity.seasonYear;
 const WEEKS = POOL_CONFIG.season.totalWeeks;
 const STRIKE_LIMIT = POOL_CONFIG.season.strikeLimit;
+const SEASON_WEEKS = POOL_CONFIG.weeks || [];
+const TEAM_WEEK_OVERRIDES = POOL_CONFIG.teamWeekOverrides || {};
 const SUPABASE_URL = POOL_CONFIG.backend.supabaseUrl;
 const SUPABASE_ANON_KEY = POOL_CONFIG.backend.supabaseAnonKey;
 
+function seasonWeek(weekNumber){
+  return SEASON_WEEKS.find(
+    week => week.week === Number(weekNumber)
+  ) || null;
+}
+
+function teamWeekOverride(weekNumber, team){
+  return TEAM_WEEK_OVERRIDES?.[weekNumber]?.[team] || null;
+}
+
+function requiredGamesForWeek(weekNumber){
+  const week = seasonWeek(weekNumber);
+
+  if(week?.requiredConferenceGames !== undefined){
+    return week.requiredConferenceGames;
+  }
+
+  return Number(weekNumber) === 1
+    ? POOL_CONFIG.rules.weekOne.requiredConferenceGames
+    : POOL_CONFIG.rules.standardWeeks.requiredConferenceGames;
+}
+
+function validateSeasonProfile(){
+  if(!POOL_CONFIG.identity){
+    throw new Error('Season profile is missing identity configuration.');
+  }
+
+  if(!POOL_CONFIG.identity.conferenceKey){
+    throw new Error('Season profile is missing a conference key.');
+  }
+
+  if(!POOL_CONFIG.rulesetKey){
+    throw new Error('Season profile is missing a ruleset key.');
+  }
+
+  if(SEASON_WEEKS.length !== WEEKS){
+    throw new Error(
+      `Season profile declares ${WEEKS} weeks but defines ${SEASON_WEEKS.length} weekly windows.`
+    );
+  }
+
+  for(let weekNumber = 1; weekNumber <= WEEKS; weekNumber++){
+    const week = seasonWeek(weekNumber);
+
+    if(!week){
+      throw new Error(`Season profile is missing Week ${weekNumber}.`);
+    }
+
+    if(!week.startsOn || !week.endsOn){
+      throw new Error(
+        `Week ${weekNumber} is missing its start or end date.`
+      );
+    }
+
+    if(!Number.isInteger(week.requiredConferenceGames)){
+      throw new Error(
+        `Week ${weekNumber} is missing its required game count.`
+      );
+    }
+  }
+}
+
+validateSeasonProfile();
+  
 const sb = POOL_CONFIG.backend.enabled
   ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
