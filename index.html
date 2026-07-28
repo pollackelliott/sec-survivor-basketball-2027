@@ -244,6 +244,7 @@ if(!ACTIVE_SEASON){
 
 const POOL_CONFIG = ACTIVE_SEASON.profile;
 const ACTIVE_SCHEDULE = ACTIVE_SEASON.schedule;
+const ACTIVE_SURVIVOR_GRID = ACTIVE_SEASON.survivorGrid;
 
 if(!POOL_CONFIG){
   throw new Error('The active season package is missing its profile.');
@@ -251,6 +252,9 @@ if(!POOL_CONFIG){
 
 if(!ACTIVE_SCHEDULE){
   throw new Error('The active season package is missing its schedule.');
+}
+if(!ACTIVE_SURVIVOR_GRID){
+  throw new Error('The active season package is missing its survivor grid.');
 }
 
 const TEAM_REGISTRY = window.TEAM_REGISTRY || {};
@@ -272,6 +276,27 @@ if(ACTIVE_SCHEDULE.sportKey !== ACTIVE_SPORT_KEY){
     `Schedule "${ACTIVE_SCHEDULE_KEY}" does not support sport "${ACTIVE_SPORT_KEY}".`
   );
 }
+if(ACTIVE_SURVIVOR_GRID.sportKey !== ACTIVE_SPORT_KEY){
+  throw new Error(
+    `Survivor grid "${ACTIVE_SURVIVOR_GRID.id}" does not support sport "${ACTIVE_SPORT_KEY}".`
+  );
+}
+
+if(
+  ACTIVE_SURVIVOR_GRID.conferenceKey !==
+  POOL_CONFIG.identity.conferenceKey
+){
+  throw new Error(
+    `Survivor grid "${ACTIVE_SURVIVOR_GRID.id}" does not support conference "${POOL_CONFIG.identity.conferenceKey}".`
+  );
+}
+
+if(ACTIVE_SURVIVOR_GRID.totalWeeks !== POOL_CONFIG.season.totalWeeks){
+  throw new Error(
+    `Survivor grid defines ${ACTIVE_SURVIVOR_GRID.totalWeeks} weeks, but the season profile defines ${POOL_CONFIG.season.totalWeeks}.`
+  );
+}
+
 const ACTIVE_RULESET_KEY = POOL_CONFIG.rulesetKey;
 const ACTIVE_RULESET = RULESET_REGISTRY[ACTIVE_RULESET_KEY];
 
@@ -367,7 +392,9 @@ function seasonWeek(weekNumber){
 function teamWeekOverride(weekNumber, team){
   return TEAM_WEEK_OVERRIDES?.[weekNumber]?.[team] || null;
 }
-
+function survivorGridEntry(team, weekNumber){
+  return ACTIVE_SURVIVOR_GRID.teams?.[team]?.[weekNumber] || null;
+}
 function requiredGamesForWeek(weekNumber){
   const week = seasonWeek(weekNumber);
 
