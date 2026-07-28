@@ -229,54 +229,13 @@
    Current development profile:
    SEC Basketball 2027
    ========================================================== */
-const POOL_CONFIG = {
-  identity: {
-    name: 'SEC Survivor',
-    sport: 'Basketball',
-    seasonYear: 2027,
-    conference: 'SEC',
-    conferenceKey: 'sec'
-  },
+const ACTIVE_SEASON_KEY = 'secBasketball2027';
 
-  environment: {
-    developmentMode: true
-  },
+const POOL_CONFIG = window.SEASON_PROFILES?.[ACTIVE_SEASON_KEY];
 
-  season: {
-    totalWeeks: 10,
-    strikeLimit: 3,
-    timezone: 'America/Chicago',
-    firstWeekStartsOn: '2026-12-28',
-    finalWeekEndsOn: '2027-03-07'
-  },
-
-  rules: {
-    weekOne: {
-      requiredConferenceGames: 1,
-      lockAt: '2027-01-02T11:00:00-06:00',
-      scoringType: 'single_game',
-      lossResult: 'strike',
-      resultCanEliminatePlayer: false
-    },
-
-    standardWeeks: {
-      requiredConferenceGames: 2,
-      defaultLockDay: 'Tuesday',
-      defaultLockTime: '18:00',
-      scoringType: 'two_game',
-      undefeatedResult: 'safe',
-      splitResult: 'strike',
-      winlessResult: 'eliminated'
-    }
-  },
-
-  backend: {
-    enabled: false,
-    supabaseUrl: 'https://placeholder.supabase.co',
-    supabaseAnonKey: 'not-configured'
-  }
-};
-
+if(!POOL_CONFIG){
+  throw new Error(`Unknown season profile: ${ACTIVE_SEASON_KEY}`);
+}
 const CONFERENCE_PROFILES = {
   sec: {
     name: 'SEC',
