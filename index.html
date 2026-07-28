@@ -356,13 +356,17 @@ function validateSeasonProfile(){
     throw new Error('Season profile is missing identity configuration.');
   }
 
-  if(!POOL_CONFIG.identity.conferenceKey){
-    throw new Error('Season profile is missing a conference key.');
-  }
+ if(!POOL_CONFIG.identity.conferenceKey){
+  throw new Error('Season profile is missing a conference key.');
+}
 
-  if(!POOL_CONFIG.rulesetKey){
-    throw new Error('Season profile is missing a ruleset key.');
-  }
+if(!POOL_CONFIG.sportKey){
+  throw new Error('Season profile is missing a sport key.');
+}
+
+if(!POOL_CONFIG.rulesetKey){
+  throw new Error('Season profile is missing a ruleset key.');
+}
 
   if(SEASON_WEEKS.length !== WEEKS){
     throw new Error(
