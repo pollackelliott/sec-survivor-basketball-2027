@@ -261,8 +261,11 @@ const ACTIVE_RULESET = RULESET_REGISTRY[ACTIVE_RULESET_KEY];
 if(!ACTIVE_RULESET){
   throw new Error(`Unknown ruleset: ${ACTIVE_RULESET_KEY}`);
 }
-
-
+if(ACTIVE_RULESET.sportKey !== ACTIVE_SPORT_KEY){
+  throw new Error(
+    `Ruleset "${ACTIVE_RULESET_KEY}" does not support sport "${ACTIVE_SPORT_KEY}".`
+  );
+}
 const ACTIVE_MEMBERSHIP_KEY =
   POOL_CONFIG.identity?.conferenceMembershipKey;
 
