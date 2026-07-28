@@ -17,8 +17,7 @@
 <script src="./config/rulesets/registry.js"></script>
 <script src="./config/rulesets/basketball.js"></script>
 <script src="./config/season-utils.js"></script>
-<script src="./config/schedules/sec-basketball-2027.js"></script>
-<script src="./config/seasons/sec-survivor-basketball-2027.js"></script>
+<script src="./config/season.js"></script>
 <style>
   :root{
     --bg:#0A1B3D; --bg-2:#071433; --panel:#122A5C; --panel-2:#193569; --hair:#26417E;
@@ -235,22 +234,30 @@
    A configurable survivor-pool application supporting
    multiple conferences, sports, seasons, and rulesets.
 
-   Current development profile:
-   SEC Basketball 2027
+   The active pool is supplied by config/season.js.
    ========================================================== */
-const ACTIVE_SEASON_KEY = 'secBasketball2027';
+const ACTIVE_SEASON = window.ACTIVE_SEASON;
 
-const POOL_CONFIG = window.SEASON_PROFILES?.[ACTIVE_SEASON_KEY];
+if(!ACTIVE_SEASON){
+  throw new Error('No active season package was loaded.');
+}
+
+const POOL_CONFIG = ACTIVE_SEASON.profile;
+const ACTIVE_SCHEDULE = ACTIVE_SEASON.schedule;
 
 if(!POOL_CONFIG){
-  throw new Error(`Unknown season profile: ${ACTIVE_SEASON_KEY}`);
+  throw new Error('The active season package is missing its profile.');
+}
+
+if(!ACTIVE_SCHEDULE){
+  throw new Error('The active season package is missing its schedule.');
 }
 
 const TEAM_REGISTRY = window.TEAM_REGISTRY || {};
 const CONFERENCE_MEMBERSHIPS = window.CONFERENCE_MEMBERSHIPS || {};
 const SPORT_REGISTRY = window.SPORT_REGISTRY || {};
 const RULESET_REGISTRY = window.RULESET_REGISTRY || {};
-const SEASON_SCHEDULES = window.SEASON_SCHEDULES || {};
+
 const ACTIVE_SPORT_KEY = POOL_CONFIG.sportKey;
 const ACTIVE_SPORT = SPORT_REGISTRY[ACTIVE_SPORT_KEY];
 
@@ -259,11 +266,6 @@ if(!ACTIVE_SPORT){
 }
 
 const ACTIVE_SCHEDULE_KEY = POOL_CONFIG.scheduleKey;
-const ACTIVE_SCHEDULE = SEASON_SCHEDULES[ACTIVE_SCHEDULE_KEY];
-
-if(!ACTIVE_SCHEDULE){
-  throw new Error(`Unknown season schedule: ${ACTIVE_SCHEDULE_KEY}`);
-}
 
 if(ACTIVE_SCHEDULE.sportKey !== ACTIVE_SPORT_KEY){
   throw new Error(
