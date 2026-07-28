@@ -18,7 +18,8 @@ window.SEASON_PROFILES.secBasketball2027 = {
     sportKey: 'basketball',
     seasonYear: 2027,
     conference: 'SEC',
-    conferenceKey: 'sec'
+    conferenceKey: 'sec',
+    conferenceMembershipKey: 'sec-2025'
   },
 
   environment: {
