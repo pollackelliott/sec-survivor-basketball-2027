@@ -2244,7 +2244,19 @@ window.SEASON_SCHEDULES.secBasketball2027 = {
   teamSessionOverrides: []
 };
 
+window.SURVIVOR_GRIDS = window.SURVIVOR_GRIDS || {};
+
+window.SURVIVOR_GRIDS.secBasketball2027 = {
+  id: 'secBasketball2027',
+  sportKey: 'basketball',
+  conferenceKey: 'sec',
+  seasonYear: 2027,
+  totalWeeks: SEC_BASKETBALL_2027_TOTAL_WEEKS,
+
+  teams: {}
+};
 window.ACTIVE_SEASON = {
   profile: window.SEASON_PROFILES.secBasketball2027,
-  schedule: window.SEASON_SCHEDULES.secBasketball2027
+  schedule: window.SEASON_SCHEDULES.secBasketball2027,
+  survivorGrid: window.SURVIVOR_GRIDS.secBasketball2027
 };
