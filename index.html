@@ -246,6 +246,13 @@ if(!POOL_CONFIG){
 const TEAM_REGISTRY = window.TEAM_REGISTRY || {};
 const CONFERENCE_MEMBERSHIPS = window.CONFERENCE_MEMBERSHIPS || {};
 const SPORT_REGISTRY = window.SPORT_REGISTRY || {};
+const ACTIVE_SPORT_KEY = POOL_CONFIG.sportKey;
+const ACTIVE_SPORT = SPORT_REGISTRY[ACTIVE_SPORT_KEY];
+
+if(!ACTIVE_SPORT){
+  throw new Error(`Unknown sport: ${ACTIVE_SPORT_KEY}`);
+}
+
 
 const ACTIVE_MEMBERSHIP_KEY =
   POOL_CONFIG.identity?.conferenceMembershipKey;
