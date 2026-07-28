@@ -440,7 +440,7 @@ function initializeAppBranding(){
   applyConferenceTheme();
 
   const appName = POOL_CONFIG.identity.name;
-  const sport = POOL_CONFIG.identity.sport;
+  const sport = ACTIVE_SPORT.displayName;
   const seasonYear = POOL_CONFIG.identity.seasonYear;
 
   document.title = `${appName} — ${sport} ${seasonYear}`;
