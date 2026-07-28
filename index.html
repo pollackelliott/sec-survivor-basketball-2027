@@ -472,18 +472,19 @@ function formatHourMinute(time){
 
 function renderRules(){
   const { identity, season, rules } = POOL_CONFIG;
+  const sportName = ACTIVE_SPORT.displayName;
   const { weekOne, standardWeeks } = rules;
 
   document.getElementById('rulesPanel').innerHTML = `
     <div class="panel">
-      <h3>${identity.name} — ${identity.sport}</h3>
+      <h3>${identity.name} — ${sportName}</h3>
 
       <div class="current-pick-banner" style="text-align:center; margin-top:12px;">
         Email ${COMMISSIONER_EMAIL} if you have any questions
       </div>
 
       <p class="hint" style="margin-top:16px;">
-        The official ${identity.seasonYear} ${identity.sport.toLowerCase()} rules are being finalized as the application is rebuilt.
+        The official ${identity.seasonYear} ${sportName.toLowerCase()} rules are being finalized as the application is rebuilt.
       </p>
 
       <div class="field"><label>Season Structure</label></div>
