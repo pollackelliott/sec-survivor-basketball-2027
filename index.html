@@ -250,11 +250,25 @@ const TEAM_REGISTRY = window.TEAM_REGISTRY || {};
 const CONFERENCE_MEMBERSHIPS = window.CONFERENCE_MEMBERSHIPS || {};
 const SPORT_REGISTRY = window.SPORT_REGISTRY || {};
 const RULESET_REGISTRY = window.RULESET_REGISTRY || {};
+const SEASON_SCHEDULES = window.SEASON_SCHEDULES || {};
 const ACTIVE_SPORT_KEY = POOL_CONFIG.sportKey;
 const ACTIVE_SPORT = SPORT_REGISTRY[ACTIVE_SPORT_KEY];
 
 if(!ACTIVE_SPORT){
   throw new Error(`Unknown sport: ${ACTIVE_SPORT_KEY}`);
+}
+
+const ACTIVE_SCHEDULE_KEY = POOL_CONFIG.scheduleKey;
+const ACTIVE_SCHEDULE = SEASON_SCHEDULES[ACTIVE_SCHEDULE_KEY];
+
+if(!ACTIVE_SCHEDULE){
+  throw new Error(`Unknown season schedule: ${ACTIVE_SCHEDULE_KEY}`);
+}
+
+if(ACTIVE_SCHEDULE.sportKey !== ACTIVE_SPORT_KEY){
+  throw new Error(
+    `Schedule "${ACTIVE_SCHEDULE_KEY}" does not support sport "${ACTIVE_SPORT_KEY}".`
+  );
 }
 const ACTIVE_RULESET_KEY = POOL_CONFIG.rulesetKey;
 const ACTIVE_RULESET = RULESET_REGISTRY[ACTIVE_RULESET_KEY];
@@ -375,6 +389,10 @@ function validateSeasonProfile(){
 
 if(!POOL_CONFIG.sportKey){
   throw new Error('Season profile is missing a sport key.');
+}
+
+if(!POOL_CONFIG.scheduleKey){
+  throw new Error('Season profile is missing a schedule key.');
 }
 
 if(!POOL_CONFIG.rulesetKey){
