@@ -239,6 +239,33 @@ const POOL_CONFIG = window.SEASON_PROFILES?.[ACTIVE_SEASON_KEY];
 if(!POOL_CONFIG){
   throw new Error(`Unknown season profile: ${ACTIVE_SEASON_KEY}`);
 }
+
+const TEAM_REGISTRY = window.TEAM_REGISTRY || {};
+const CONFERENCE_MEMBERSHIPS = window.CONFERENCE_MEMBERSHIPS || {};
+
+const ACTIVE_MEMBERSHIP_KEY =
+  POOL_CONFIG.identity?.conferenceMembershipKey;
+
+const ACTIVE_MEMBERSHIP =
+  CONFERENCE_MEMBERSHIPS[ACTIVE_MEMBERSHIP_KEY];
+
+if(!ACTIVE_MEMBERSHIP){
+  throw new Error(
+    `Unknown conference membership profile: ${ACTIVE_MEMBERSHIP_KEY}`
+  );
+}
+
+const missingMembershipTeamIds =
+  ACTIVE_MEMBERSHIP.teamIds.filter(
+    teamId => !TEAM_REGISTRY[teamId]
+  );
+
+if(missingMembershipTeamIds.length){
+  throw new Error(
+    `Conference membership ${ACTIVE_MEMBERSHIP_KEY} references unknown teams: ` +
+    missingMembershipTeamIds.join(', ')
+  );
+}
 const CONFERENCE_PROFILES = {
   sec: {
     name: 'SEC',
