@@ -36,7 +36,7 @@ window.SEASON_PROFILES.secBasketball2027 = {
         SEC_BASKETBALL_2027_WEEKS.length - 1
       ].endsOn
   },
-
+  sportKey: 'basketball',
   rulesetKey: 'basketball',
 
   rules: {
