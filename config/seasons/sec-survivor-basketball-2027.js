@@ -11,6 +11,7 @@ const SEC_BASKETBALL_2027_WEEKS = buildWeeklyWindows({
 });
 
 window.SEASON_PROFILES.secBasketball2027 = {
+    scheduleKey: 'secBasketball2027',
   identity: {
     key: 'secBasketball2027',
     name: 'SEC Survivor',
