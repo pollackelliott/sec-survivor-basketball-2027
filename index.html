@@ -664,9 +664,8 @@ function opponentOf(week, team){
 }
 
 function resultForGame(game, team){
-  if(!game || !game.winner){
-    return null;
-  }
+  return SurvivorEngine.Results.resultForGame(game, team);
+}
 
   return game.winner === team ? 1 : 0;
 }
