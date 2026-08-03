@@ -667,9 +667,6 @@ function resultForGame(game, team){
   return SurvivorEngine.Results.resultForGame(game, team);
 }
 
-  return game.winner === team ? 1 : 0;
-}
-
 function weekDeadline(week){
   return WEEK_DEADLINES[week] || null;
 }
