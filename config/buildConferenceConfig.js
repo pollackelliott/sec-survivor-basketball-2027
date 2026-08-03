@@ -35,4 +35,4 @@ window.buildConferenceConfig = function buildConferenceConfig(membership, teamRe
   });
 
   return config;
-}
+};
