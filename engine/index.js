@@ -110,5 +110,23 @@ window.SurvivorEngine.Eligibility = {
     return opponent
       ? (!classification[opponent] || !classification[opponent].eligible)
       : false;
+  },
+
+  classifyOpponent(opponent, conferenceTeams, classification){
+    if(!opponent){
+      return 'invalid';
+    }
+
+    if(conferenceTeams.includes(opponent)){
+      return 'conference';
+    }
+
+    const row = classification[opponent];
+
+    if(!row || !row.eligible){
+      return 'ineligible';
+    }
+
+    return row.category;
   }
 };
