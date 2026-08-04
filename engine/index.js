@@ -11,6 +11,14 @@ window.SurvivorEngine.Results = {
 };
 
 window.SurvivorEngine.Schedule = {
+  gamesForTeam(games, week, team){
+    return games.filter(
+      game =>
+        game.week === week &&
+        (game.home === team || game.away === team)
+    );
+  },
+
   opponentForGame(game, team){
     if(!game){
       return null;
