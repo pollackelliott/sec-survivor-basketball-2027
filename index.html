@@ -1173,13 +1173,16 @@ function renderMyPick(){
   // picked for this same week — otherwise editing your own G5/non-con pick
   // would wrongly count it against itself and hide its sibling options.
   // (Mirrors submit_pick's own `week <> p_week` exclusion in the database.)
-  let nonConLeft = 3, g5Left = 1;
-  (me ? me.picks : []).forEach((pick, i) => {
-    if(i === targetWeek - 1 || !pick) return;
-    const cat = classifyPick(i+1, pick);
-    if(cat === 'g5' || cat === 'not_g5') nonConLeft--;
-    if(cat === 'g5') g5Left--;
-  });
+  const allowances =
+  window.SurvivorEngine.Eligibility.remainingAllowances(
+    me ? me.picks : [],
+    LEGACY_FOOTBALL_ALLOWANCE_LIMITS,
+    classifyPick,
+    targetWeek
+  );
+
+const nonConLeft = allowances.nonConferenceLeft;
+const g5Left = allowances.g5Left;
 
   el.innerHTML = `
     <div class="panel">
