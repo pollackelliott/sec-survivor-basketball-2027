@@ -656,9 +656,11 @@ function firstGameForTeam(week, team){
 function opponentOf(week, team){
   const game = firstGameForTeam(week, team);
 
-  if(!game){
-    return null;
-  }
+  return window.SurvivorEngine.Schedule.opponentForGame(
+    game,
+    team
+  );
+}
 
   return game.home === team ? game.away : game.home;
 }
