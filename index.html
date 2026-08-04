@@ -766,10 +766,11 @@ function nonConferenceSideOf(game){
 }
 
 function gameIsIneligible(game){
-  const opponent = nonConferenceSideOf(game);
-  return opponent
-    ? (!CLASSIFICATION[opponent] || !CLASSIFICATION[opponent].eligible)
-    : false;
+  return window.SurvivorEngine.Eligibility.gameIsIneligible(
+    game,
+    CONFERENCE_TEAMS,
+    CLASSIFICATION
+  );
 }
 
 function gamePillHTML(game){
