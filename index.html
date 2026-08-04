@@ -925,9 +925,11 @@ function openPlayerSheet(id){
   if(!p) return;
   const statRow = `<div class="stat-row">
     <div class="stat"><div class="v ${p.alive?'':'out-status'}">${p.alive?'ALIVE':'OUT'}</div><div class="l">Status</div></div>
-    <div class="stat"><div class="v">${p.isMe ? p.nonConLeft : '—'}</div><div class="l">Non-Con Left</div></div>
-    <div class="stat"><div class="v">${p.isMe ? p.g5Left : '—'}</div><div class="l">G5 Left</div></div>
-  </div>`;
+    ${ACTIVE_ALLOWANCE_LIMITS ? `
+  <div class="stat"><div class="v">${p.isMe ? p.nonConLeft : '—'}</div><div class="l">Non-Con Left</div></div>
+  <div class="stat"><div class="v">${p.isMe ? p.g5Left : '—'}</div><div class="l">G5 Left</div></div>
+` : ''}
+    </div>`;
   const banner = p.alive
     ? ''
     : `<div class="out-banner">ELIMINATED — WEEK ${p.eliminatedWeek}</div>`;
@@ -1187,10 +1189,12 @@ const g5Left = allowances.g5Left;
     <div class="panel">
       <h3>Week ${targetWeek}</h3>
       <p class="hint">Signed in as <strong>${me ? me.name : 'you'}</strong> &middot; <span id="logoutLink" style="text-decoration:underline; cursor:pointer;">Log out</span></p>
-      <div class="allowance-row">
-        <div class="allowance"><div class="v">${nonConLeft}</div><div class="l">Non-Con Left</div></div>
-        <div class="allowance"><div class="v">${g5Left}</div><div class="l">G5 Left</div></div>
-      </div>
+      ${allowances.enabled ? `
+  <div class="allowance-row">
+    <div class="allowance"><div class="v">${nonConLeft}</div><div class="l">Non-Con Left</div></div>
+    <div class="allowance"><div class="v">${g5Left}</div><div class="l">G5 Left</div></div>
+  </div>
+` : ''}
       <div id="pickOptions"></div>
       <div id="pickMsg"></div>
     </div>`;
@@ -1227,8 +1231,23 @@ if(!context){
 
 const cat = classifyPick(week, team);
       if(cat === 'ineligible' || cat === 'invalid') return;
-      if((cat === 'g5' || cat === 'not_g5') && nonConLeft <= 0 && !(existing && existing.team === team)) return;
-      if(cat === 'g5' && g5Left <= 0 && !(existing && existing.team === team)) return;
+      if(
+  nonConLeft !== null &&
+  (cat === 'g5' || cat === 'not_g5') &&
+  nonConLeft <= 0 &&
+  !(existing && existing.team === team)
+){
+  return;
+}
+
+if(
+  g5Left !== null &&
+  cat === 'g5' &&
+  g5Left <= 0 &&
+  !(existing && existing.team === team)
+){
+  return;
+}
       const editableUntil = context.games.reduce((earliest, item) => {
   if(!item.editableUntil){
     return earliest;
