@@ -344,6 +344,10 @@ const SEASON_WEEKS = POOL_CONFIG.weeks || [];
 const TEAM_WEEK_OVERRIDES = POOL_CONFIG.teamWeekOverrides || {};
 const SUPABASE_URL = POOL_CONFIG.backend.supabaseUrl;
 const SUPABASE_ANON_KEY = POOL_CONFIG.backend.supabaseAnonKey;
+const LEGACY_FOOTBALL_ALLOWANCE_LIMITS = {
+  nonConference: 3,
+  g5: 1
+};
 
 function seasonWeek(weekNumber){
   return SEASON_WEEKS.find(
@@ -807,13 +811,15 @@ function buildPlayers(){
     }
     const alive = eliminatedWeek === null;
 
-    let nonConLeft = 3, g5Left = 1;
-    picks.forEach((pick, i) => {
-      if(!pick) return;
-      const cat = classifyPick(i+1, pick);
-      if(cat === 'g5' || cat === 'not_g5') nonConLeft--;
-      if(cat === 'g5') g5Left--;
-    });
+const allowances =
+  window.SurvivorEngine.Eligibility.remainingAllowances(
+    picks,
+    LEGACY_FOOTBALL_ALLOWANCE_LIMITS,
+    classifyPick
+  );
+
+const nonConLeft = allowances.nonConferenceLeft;
+const g5Left = allowances.g5Left;
 
     return { id: p.id, name: p.name, fanOf: p.fan_of, alive, picks, revealed, results, eliminatedWeek, nonConLeft, g5Left, isMe };
   });
