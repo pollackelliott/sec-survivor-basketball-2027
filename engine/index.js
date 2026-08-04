@@ -129,7 +129,15 @@ window.SurvivorEngine.Eligibility = {
 
     return row.category;
   },
-  remainingAllowances(picks, limits, classifyPick, excludedWeek = null){
+remainingAllowances(picks, limits, classifyPick, excludedWeek = null){
+  if(!limits){
+    return {
+      enabled: false,
+      nonConferenceLeft: null,
+      g5Left: null
+    };
+  }
+
   let nonConferenceLeft = limits.nonConference;
   let g5Left = limits.g5;
 
@@ -152,6 +160,7 @@ window.SurvivorEngine.Eligibility = {
   });
 
   return {
+    enabled: true,
     nonConferenceLeft,
     g5Left
   };
