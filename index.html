@@ -679,16 +679,10 @@ function weekReopenTime(week){
 }
 
 function pickEditableUntilGame(week, game){
-  if(!game){
-    return null;
-  }
-
-  const deadline = weekDeadline(week);
-  const gameTime = new Date(game.kickoff_at);
-
-  return deadline && deadline < gameTime
-    ? deadline
-    : gameTime;
+  return window.SurvivorEngine.Schedule.pickEditableUntilGame(
+    weekDeadline(week),
+    game
+  );
 }
 
 function getTeamWeekContext(week, team){
