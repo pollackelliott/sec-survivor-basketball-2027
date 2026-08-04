@@ -82,3 +82,22 @@ window.SurvivorEngine.Schedule = {
     return null;
   }
 };
+
+window.SurvivorEngine.Eligibility = {
+  nonConferenceSideOf(game, conferenceTeams){
+    if(!game){
+      return null;
+    }
+
+    const awayIsConference = conferenceTeams.includes(game.away);
+    const homeIsConference = conferenceTeams.includes(game.home);
+
+    if(awayIsConference === homeIsConference){
+      return null;
+    }
+
+    return awayIsConference
+      ? game.home
+      : game.away;
+  }
+};
