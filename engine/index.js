@@ -129,40 +129,87 @@ window.SurvivorEngine.Eligibility = {
 
     return row.category;
   },
-remainingAllowances(picks, limits, classifyPick, excludedWeek = null){
-  if(!limits){
+  remainingAllowances(picks, limits, classifyPick, excludedWeek = null){
+    if(!limits){
+      return {
+        enabled: false,
+        nonConferenceLeft: null,
+        g5Left: null
+      };
+    }
+
+    let nonConferenceLeft = limits.nonConference;
+    let g5Left = limits.g5;
+
+    picks.forEach((pick, index) => {
+      const week = index + 1;
+
+      if(!pick || week === excludedWeek){
+        return;
+      }
+
+      const category = classifyPick(week, pick);
+
+      if(category === 'g5' || category === 'not_g5'){
+        nonConferenceLeft--;
+      }
+
+      if(category === 'g5'){
+        g5Left--;
+      }
+    });
+
     return {
-      enabled: false,
-      nonConferenceLeft: null,
-      g5Left: null
+      enabled: true,
+      nonConferenceLeft,
+      g5Left
     };
   }
+};
 
-  let nonConferenceLeft = limits.nonConference;
-  let g5Left = limits.g5;
-
-  picks.forEach((pick, index) => {
-    const week = index + 1;
-
-    if(!pick || week === excludedWeek){
-      return;
+window.SurvivorEngine.Outcomes = {
+  evaluateWeek(results, recordOutcomes){
+    if(!Array.isArray(results) || results.length === 0){
+      return {
+        state: 'pending',
+        wins: 0,
+        losses: 0,
+        recordKey: null,
+        strikesAdded: 0
+      };
     }
 
-    const category = classifyPick(week, pick);
-
-    if(category === 'g5' || category === 'not_g5'){
-      nonConferenceLeft--;
+    if(results.some(result => result === null)){
+      return {
+        state: 'pending',
+        wins: results.filter(result => result === 1).length,
+        losses: results.filter(result => result === 0).length,
+        recordKey: null,
+        strikesAdded: 0
+      };
     }
 
-    if(category === 'g5'){
-      g5Left--;
-    }
-  });
+    const wins = results.filter(result => result === 1).length;
+    const losses = results.filter(result => result === 0).length;
+    const recordKey = `${wins}-${losses}`;
+    const outcome = recordOutcomes?.[recordKey];
 
-  return {
-    enabled: true,
-    nonConferenceLeft,
-    g5Left
-  };
-}
+    if(!outcome){
+      return {
+        state: 'invalid',
+        wins,
+        losses,
+        recordKey,
+        strikesAdded: 0
+      };
+    }
+
+    return {
+      state: outcome.state,
+      wins,
+      losses,
+      recordKey,
+      strikesAdded: outcome.strikesAdded || 0
+    };
+  }
 };
