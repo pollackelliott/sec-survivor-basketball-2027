@@ -1,15 +1,3 @@
-window.SurvivorEngine = window.SurvivorEngine || {};
-
-window.SurvivorEngine.Results = {
-  resultForGame(game, team){
-    if(!game || !game.winner){
-      return null;
-    }
-
-    return game.winner === team ? 1 : 0;
-  }
-};
-
 window.SurvivorEngine.Schedule = {
   gamesForTeam(games, week, team){
     return games.filter(
@@ -21,6 +9,22 @@ window.SurvivorEngine.Schedule = {
 
   firstGameForTeam(games, week, team){
     return this.gamesForTeam(games, week, team)[0] || null;
+  },
+
+  pickEditableUntilGame(deadline, game){
+    if(!game){
+      return null;
+    }
+
+    const gameTime = new Date(game.kickoff_at);
+
+    if(!deadline){
+      return gameTime;
+    }
+
+    return deadline < gameTime
+      ? deadline
+      : gameTime;
   },
 
   opponentForGame(game, team){
