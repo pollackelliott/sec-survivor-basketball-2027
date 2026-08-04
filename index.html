@@ -759,14 +759,10 @@ function teamCategoryClass(team){
 }
 
 function nonConferenceSideOf(game){
-  const awayIsConference = CONFERENCE_TEAMS.includes(game.away);
-  const homeIsConference = CONFERENCE_TEAMS.includes(game.home);
-
-  if(awayIsConference && homeIsConference){
-    return null;
-  }
-
-  return awayIsConference ? game.home : game.away;
+  return window.SurvivorEngine.Eligibility.nonConferenceSideOf(
+    game,
+    CONFERENCE_TEAMS
+  );
 }
 
 function gameIsIneligible(game){
