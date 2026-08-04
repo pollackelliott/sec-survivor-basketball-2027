@@ -19,6 +19,10 @@ window.SurvivorEngine.Schedule = {
     );
   },
 
+  firstGameForTeam(games, week, team){
+    return this.gamesForTeam(games, week, team)[0] || null;
+  },
+
   opponentForGame(game, team){
     if(!game){
       return null;
