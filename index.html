@@ -686,30 +686,12 @@ function pickEditableUntilGame(week, game){
 }
 
 function getTeamWeekContext(week, team){
-  const games = gamesForTeam(week, team);
-
-  if(games.length === 0){
-    return null;
-  }
-
-  const gameContexts = games.map(game => {
-    const isHome = game.home === team;
-
-    return {
-      game,
-      opponent: isHome ? game.away : game.home,
-      location: isHome ? 'home' : 'away',
-      result: resultForGame(game, team),
-      editableUntil: pickEditableUntilGame(week, game)
-    };
-  });
-
-  return {
+  return window.SurvivorEngine.Schedule.teamWeekContext(
+    GAMES,
     week,
     team,
-    games: gameContexts,
-    gameCount: gameContexts.length
-  };
+    weekDeadline(week)
+  );
 }
 
 /*
