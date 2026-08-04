@@ -128,5 +128,32 @@ window.SurvivorEngine.Eligibility = {
     }
 
     return row.category;
-  }
+  },
+  remainingAllowances(picks, limits, classifyPick, excludedWeek = null){
+  let nonConferenceLeft = limits.nonConference;
+  let g5Left = limits.g5;
+
+  picks.forEach((pick, index) => {
+    const week = index + 1;
+
+    if(!pick || week === excludedWeek){
+      return;
+    }
+
+    const category = classifyPick(week, pick);
+
+    if(category === 'g5' || category === 'not_g5'){
+      nonConferenceLeft--;
+    }
+
+    if(category === 'g5'){
+      g5Left--;
+    }
+  });
+
+  return {
+    nonConferenceLeft,
+    g5Left
+  };
+}
 };
