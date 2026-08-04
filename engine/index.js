@@ -99,5 +99,16 @@ window.SurvivorEngine.Eligibility = {
     return awayIsConference
       ? game.home
       : game.away;
+  },
+
+  gameIsIneligible(game, conferenceTeams, classification){
+    const opponent = this.nonConferenceSideOf(
+      game,
+      conferenceTeams
+    );
+
+    return opponent
+      ? (!classification[opponent] || !classification[opponent].eligible)
+      : false;
   }
 };
