@@ -642,10 +642,10 @@ reopenResults.forEach((result, i) => {
    Game rules, eligibility, scoring, deadlines, and schedule
    ========================================================== */
 function gamesForTeam(week, team){
-  return GAMES.filter(
-    game =>
-      game.week === week &&
-      (game.home === team || game.away === team)
+  return window.SurvivorEngine.Schedule.gamesForTeam(
+    GAMES,
+    week,
+    team
   );
 }
 
