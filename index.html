@@ -650,7 +650,11 @@ function gamesForTeam(week, team){
 }
 
 function firstGameForTeam(week, team){
-  return gamesForTeam(week, team)[0] || null;
+  return window.SurvivorEngine.Schedule.firstGameForTeam(
+    GAMES,
+    week,
+    team
+  );
 }
 
 function opponentOf(week, team){
