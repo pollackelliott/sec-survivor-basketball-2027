@@ -712,23 +712,11 @@ function resultFor(week, team){
 }
 
 function classifyPick(week, team){
-  const opponent = opponentOf(week, team);
-
-  if(!opponent){
-    return 'invalid';
-  }
-
-  if(CONFERENCE_TEAMS.includes(opponent)){
-    return 'conference';
-  }
-
-  const row = CLASSIFICATION[opponent];
-
-  if(!row || !row.eligible){
-    return 'ineligible';
-  }
-
-  return row.category;
+  return window.SurvivorEngine.Eligibility.classifyOpponent(
+    opponentOf(week, team),
+    CONFERENCE_TEAMS,
+    CLASSIFICATION
+  );
 }
 
 function opponentContextHTML(week, team){
