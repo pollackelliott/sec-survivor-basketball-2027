@@ -27,6 +27,33 @@ window.SurvivorEngine.Schedule = {
       : gameTime;
   },
 
+  teamWeekContext(games, week, team, deadline){
+    const teamGames = this.gamesForTeam(games, week, team);
+
+    if(teamGames.length === 0){
+      return null;
+    }
+
+    const gameContexts = teamGames.map(game => {
+      const isHome = game.home === team;
+
+      return {
+        game,
+        opponent: this.opponentForGame(game, team),
+        location: isHome ? 'home' : 'away',
+        result: window.SurvivorEngine.Results.resultForGame(game, team),
+        editableUntil: this.pickEditableUntilGame(deadline, game)
+      };
+    });
+
+    return {
+      week,
+      team,
+      games: gameContexts,
+      gameCount: gameContexts.length
+    };
+  },
+
   opponentForGame(game, team){
     if(!game){
       return null;
