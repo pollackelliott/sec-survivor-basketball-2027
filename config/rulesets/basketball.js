@@ -5,6 +5,7 @@ window.RULESET_REGISTRY.basketball = Object.freeze({
   sportKey: 'basketball',
 
   outcomes: Object.freeze({
+    tracksStrikes: true,
     records: Object.freeze({
       '1-0': Object.freeze({
         state: 'safe',
