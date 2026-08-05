@@ -1053,98 +1053,265 @@ function openPlayerSheet(id){
 
 /* ======================== SHEET: week detail ======================== */
 function openWeekSheet(week){
-  const weekGames = GAMES.filter(g => g.week === week);
+  const weekGames = GAMES.filter(game => game.week === week);
   const deadline = weekDeadline(week);
-  const revealed = deadline ? (new Date() >= deadline) : false;
+  const revealed = deadline
+    ? new Date() >= deadline
+    : false;
 
   const tally = {};
+
   if(revealed){
-    ALL_PLAYERS.forEach(p => {
-      const pick = p.picks[week-1];
-      if(!pick) return;
-      if(!tally[pick]) tally[pick] = { count: 0, result: p.results[week-1] };
+    ALL_PLAYERS.forEach(player => {
+      const pick = player.picks[week - 1];
+
+      if(!pick){
+        return;
+      }
+
+      if(!tally[pick]){
+        tally[pick] = {
+          count: 0,
+          result: player.results[week - 1]
+        };
+      }
+
       tally[pick].count++;
     });
   }
-  const pickCount = team => (tally[team] ? tally[team].count : 0);
+
+  const pickCount = team =>
+    tally[team]
+      ? tally[team].count
+      : 0;
 
   let picksHTML = '';
+
   if(revealed){
-    const tallyRows = Object.entries(tally).sort((a,b)=>b[1].count-a[1].count);
-    picksHTML = '<div class="week-section"><h3>Picks This Week</h3>';
+    const tallyRows = Object.entries(tally)
+      .sort((a, b) => b[1].count - a[1].count);
+
+    picksHTML =
+      '<div class="week-section"><h3>Picks This Week</h3>';
+
     if(tallyRows.length === 0){
-      picksHTML += `<div class="empty">No picks recorded for this week.</div>`;
+      picksHTML +=
+        '<div class="empty">No picks recorded for this week.</div>';
     } else {
       tallyRows.forEach(([team, info]) => {
-        let cls = 'neutral';
-        if(info.result === 1) cls = 'win'; else if(info.result === 0) cls = 'loss';
-        picksHTML += `<div class="pickstat-row">
-          <div class="team-dot" style="--tc:${teamColor(team)}; --tc2:${teamSecondaryColor(team)}"></div>
-          <div class="pickstat-name">${team}${opponentContextHTML(week, team)}</div>
-          <div class="pickstat-count">${info.count} pick${info.count===1?'':'s'}</div>
-          <div class="result-icon ${cls}">${cls==='win'?'✓':cls==='loss'?'✕':'·'}</div>
-        </div>`;
+        let outcomeClass = 'neutral';
+
+        if(info.result === 1){
+          outcomeClass = 'win';
+        } else if(info.result === 0){
+          outcomeClass = 'loss';
+        }
+
+        picksHTML += `
+          <div class="pickstat-row">
+            <div
+              class="team-dot"
+              style="--tc:${teamColor(team)}; --tc2:${teamSecondaryColor(team)}"
+            ></div>
+
+            <div class="pickstat-name">
+              ${team}${opponentContextHTML(week, team)}
+            </div>
+
+            <div class="pickstat-count">
+              ${info.count} pick${info.count === 1 ? '' : 's'}
+            </div>
+
+            <div class="result-icon ${outcomeClass}">
+              ${
+                outcomeClass === 'win'
+                  ? '✓'
+                  : outcomeClass === 'loss'
+                    ? '✕'
+                    : '·'
+              }
+            </div>
+          </div>
+        `;
       });
     }
+
     picksHTML += '</div>';
   }
 
-  const conferenceSortName = (g) => {
-    const awayConf = CONFERENCE_TEAMS.includes(g.away), homeConf = CONFERENCE_TEAMS.includes(g.home);
-    if (awayConf && homeConf) return g.away < g.home ? g.away : g.home;
-    return awayConf ? g.away : g.home;
+  const conferenceSortName = game => {
+    const awayIsConference =
+      CONFERENCE_TEAMS.includes(game.awayTeam);
+
+    const homeIsConference =
+      CONFERENCE_TEAMS.includes(game.homeTeam);
+
+    if(awayIsConference && homeIsConference){
+      return game.awayTeam < game.homeTeam
+        ? game.awayTeam
+        : game.homeTeam;
+    }
+
+    return awayIsConference
+      ? game.awayTeam
+      : game.homeTeam;
   };
-  const gamesSorted = [...weekGames].sort((a,b) => {
+
+  const gamesSorted = [...weekGames].sort((a, b) => {
     const aIneligible = gameIsIneligible(a) ? 1 : 0;
     const bIneligible = gameIsIneligible(b) ? 1 : 0;
-    if(aIneligible !== bIneligible) return aIneligible - bIneligible; // eligible games first, FCS games last
-    return revealed
-      ? Math.max(pickCount(b.away),pickCount(b.home)) - Math.max(pickCount(a.away),pickCount(a.home))
-      : conferenceSortName(a).localeCompare(conferenceSortName(b));
+
+    if(aIneligible !== bIneligible){
+      return aIneligible - bIneligible;
+    }
+
+    if(revealed){
+      return (
+        Math.max(
+          pickCount(b.awayTeam),
+          pickCount(b.homeTeam)
+        ) -
+        Math.max(
+          pickCount(a.awayTeam),
+          pickCount(a.homeTeam)
+        )
+      );
+    }
+
+    return conferenceSortName(a)
+      .localeCompare(conferenceSortName(b));
   });
 
-  let gamesHTML = '<div class="week-section"><h3>Scores</h3>';
+  let gamesHTML =
+    '<div class="week-section"><h3>Games</h3>';
+
   if(gamesSorted.length === 0){
-    gamesHTML += `<div class="empty">No schedule entered for this week yet.</div>`;
+    gamesHTML += `
+      <div class="empty">
+        No schedule entered for this week yet.
+      </div>
+    `;
   } else {
-    gamesSorted.forEach(g => {
-      const played = g.away_score !== null && g.home_score !== null;
-      const awayWon = g.winner === g.away;
-      const homeWon = g.winner === g.home;
-      const awayPicked = revealed && pickCount(g.away) > 0;
-      const homePicked = revealed && pickCount(g.home) > 0;
-      const unpicked = revealed && !awayPicked && !homePicked;
-      const ineligibleGame = gameIsIneligible(g);
+    gamesSorted.forEach(game => {
+      const played =
+        game.awayScore !== null &&
+        game.homeScore !== null;
+
+      const awayWon =
+        game.winnerTeam === game.awayTeam;
+
+      const homeWon =
+        game.winnerTeam === game.homeTeam;
+
+      const awayPicked =
+        revealed &&
+        pickCount(game.awayTeam) > 0;
+
+      const homePicked =
+        revealed &&
+        pickCount(game.homeTeam) > 0;
+
+      const unpicked =
+        revealed &&
+        !awayPicked &&
+        !homePicked;
+
+      const ineligibleGame =
+        gameIsIneligible(game);
+
       const teamClass = (isWinner, isPicked) => {
         const classes = ['game-team'];
-        if(isWinner) classes.push('winner');
-        if(isPicked && played) classes.push(isWinner ? 'pick-hit' : 'pick-miss');
+
+        if(isWinner){
+          classes.push('winner');
+        }
+
+        if(isPicked && played){
+          classes.push(
+            isWinner
+              ? 'pick-hit'
+              : 'pick-miss'
+          );
+        }
+
         return classes.join(' ');
       };
-      // Once a game is final, the win/loss coloring above always wins — team
-      // brand color (and the plain-white/grey opponent designation) is only
-      // for browsing a game that hasn't been decided yet.
-      const sideMarkup = (team) => {
+
+      const sideMarkup = team => {
         if(played){
-          return `<span class="game-team-name">${team}</span>`;
+          return `
+            <span class="game-team-name">
+              ${teamDisplay(team)}
+            </span>
+          `;
         }
+
         if(CONFERENCE_TEAMS.includes(team)){
-          return `<span class="game-team-name sec-chip" style="background:${teamColor(team)}; color:${teamSecondaryColor(team)}">${teamDisplay(team)}</span>`;
+          return `
+            <span
+              class="game-team-name sec-chip"
+              style="
+                background:${teamColor(team)};
+                color:${teamSecondaryColor(team)}
+              "
+            >
+              ${teamDisplay(team)}
+            </span>
+          `;
         }
-        return `<span class="game-team-name ${teamCategoryClass(team)}">${team}</span>`;
+
+        return `
+          <span class="game-team-name ${teamCategoryClass(team)}">
+            ${teamDisplay(team)}
+          </span>
+        `;
       };
-      gamesHTML += `<div class="game-row ${unpicked ? 'unpicked' : ''} ${ineligibleGame ? 'ineligible-game' : ''}">
-        <div class="${teamClass(awayWon, awayPicked)}">${sideMarkup(g.away)}${played ? ` <span class="game-score">${g.away_score}</span>` : ''}</div>
-        <div class="game-at">@</div>
-        <div class="${teamClass(homeWon, homePicked)}">${sideMarkup(g.home)}${played ? ` <span class="game-score">${g.home_score}</span>` : ''}</div>
-        <div class="game-pill-slot">${gamePillHTML(g)}</div>
-      </div>`;
+
+      gamesHTML += `
+        <div class="
+          game-row
+          ${unpicked ? 'unpicked' : ''}
+          ${ineligibleGame ? 'ineligible-game' : ''}
+        ">
+          <div class="${teamClass(awayWon, awayPicked)}">
+            ${sideMarkup(game.awayTeam)}
+            ${
+              played
+                ? `<span class="game-score">${game.awayScore}</span>`
+                : ''
+            }
+          </div>
+
+          <div class="game-at">@</div>
+
+          <div class="${teamClass(homeWon, homePicked)}">
+            ${sideMarkup(game.homeTeam)}
+            ${
+              played
+                ? `<span class="game-score">${game.homeScore}</span>`
+                : ''
+            }
+          </div>
+
+          <div class="game-pill-slot">
+            ${gamePillHTML(game)}
+          </div>
+        </div>
+      `;
     });
   }
+
   gamesHTML += '</div>';
 
-  document.getElementById('sheetContent').innerHTML =
-    `<div class="sheet-head"><div class="name">Week ${week}</div></div>${picksHTML}${gamesHTML}`;
+  document.getElementById('sheetContent').innerHTML = `
+    <div class="sheet-head">
+      <div class="name">Week ${week}</div>
+    </div>
+
+    ${picksHTML}
+    ${gamesHTML}
+  `;
+
   showSheet();
 }
 
