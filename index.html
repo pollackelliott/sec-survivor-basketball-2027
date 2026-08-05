@@ -1732,9 +1732,17 @@ async function refreshAll(){
   document.getElementById('loadingMsg').style.display = 'none';
 
   if(!POOL_CONFIG.backend.enabled){
-    renderDevelopmentMode();
-    return;
-  }
+  GAMES =
+    window.SurvivorAdapters.Schedule.normalizeSchedule(
+      ACTIVE_SCHEDULE,
+      SEASON_WEEKS
+    );
+
+  CURRENT_WEEK = 1;
+
+  renderDevelopmentMode();
+  return;
+}
 
   try{
     await refreshAll();
