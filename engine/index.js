@@ -1,23 +1,26 @@
 window.SurvivorEngine = window.SurvivorEngine || {};
 
 window.SurvivorEngine.Results = {
-  resultForGame(game, team){
-    if(!game || !game.winner){
-      return null;
-    }
-
-    return game.winner === team ? 1 : 0;
+resultForGame(game, team){
+  if(!game || !game.winnerTeam){
+    return null;
   }
+
+  return game.winnerTeam === team ? 1 : 0;
+}
 };
 
 window.SurvivorEngine.Schedule = {
   gamesForTeam(games, week, team){
-    return games.filter(
-      game =>
-        game.week === week &&
-        (game.home === team || game.away === team)
-    );
-  },
+  return games.filter(
+    game =>
+      game.week === week &&
+      (
+        game.homeTeam === team ||
+        game.awayTeam === team
+      )
+  );
+},
 
   firstGameForTeam(games, week, team){
     return this.gamesForTeam(games, week, team)[0] || null;
@@ -28,7 +31,12 @@ window.SurvivorEngine.Schedule = {
       return null;
     }
 
-    const gameTime = new Date(game.kickoff_at);
+    const gameTime = game.startsAt
+  ? new Date(game.startsAt)
+  : null;
+  if(!gameTime){
+  return deadline || null;
+}
 
     if(!deadline){
       return gameTime;
@@ -47,7 +55,7 @@ window.SurvivorEngine.Schedule = {
     }
 
     const gameContexts = teamGames.map(game => {
-      const isHome = game.home === team;
+      const isHome = game.homeTeam === team;
 
       return {
         game,
@@ -67,39 +75,42 @@ window.SurvivorEngine.Schedule = {
   },
 
   opponentForGame(game, team){
-    if(!game){
-      return null;
-    }
-
-    if(game.home === team){
-      return game.away;
-    }
-
-    if(game.away === team){
-      return game.home;
-    }
-
+  if(!game){
     return null;
   }
+
+  if(game.homeTeam === team){
+    return game.awayTeam;
+  }
+
+  if(game.awayTeam === team){
+    return game.homeTeam;
+  }
+
+  return null;
+}
 };
 
 window.SurvivorEngine.Eligibility = {
   nonConferenceSideOf(game, conferenceTeams){
-    if(!game){
-      return null;
-    }
+  if(!game){
+    return null;
+  }
 
-    const awayIsConference = conferenceTeams.includes(game.away);
-    const homeIsConference = conferenceTeams.includes(game.home);
+  const awayIsConference =
+    conferenceTeams.includes(game.awayTeam);
 
-    if(awayIsConference === homeIsConference){
-      return null;
-    }
+  const homeIsConference =
+    conferenceTeams.includes(game.homeTeam);
 
-    return awayIsConference
-      ? game.home
-      : game.away;
-  },
+  if(awayIsConference === homeIsConference){
+    return null;
+  }
+
+  return awayIsConference
+    ? game.homeTeam
+    : game.awayTeam;
+},
 
   gameIsIneligible(game, conferenceTeams, classification){
     const opponent = this.nonConferenceSideOf(
