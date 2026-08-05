@@ -856,7 +856,21 @@ const allowances =
 const nonConLeft = allowances.nonConferenceLeft;
 const g5Left = allowances.g5Left;
 
-    return { id: p.id, name: p.name, fanOf: p.fan_of, alive, picks, revealed, results, eliminatedWeek, nonConLeft, g5Left, isMe };
+    return {
+  id: p.id,
+  name: p.name,
+  fanOf: p.fan_of,
+  alive,
+  picks,
+  revealed,
+  results,
+  weeklyOutcomes,
+  strikes: seasonOutcome.strikes,
+  eliminatedWeek,
+  nonConLeft,
+  g5Left,
+  isMe
+};
   });
 }
 
