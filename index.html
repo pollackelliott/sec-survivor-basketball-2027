@@ -883,19 +883,44 @@ let ALL_PLAYERS = [];
 let CURRENT_WEEK = 1;
 
 function computeCurrentWeek(){
-  // "Current" means the latest week that has actually STARTED (its earliest
-  // kickoff has already passed) — not merely the latest week we happen to
-  // have schedule data for. Backfilling future weeks' schedules shouldn't
-  // make the app think the season is further along than it really is.
-  let w = 1;
+  let currentWeek = 1;
   const now = new Date();
-  const weeksWithGames = [...new Set(GAMES.map(g=>g.week))];
-  weeksWithGames.forEach(wk => {
-    const weekGames = GAMES.filter(g => g.week === wk);
-    const earliest = weekGames.reduce((a,b) => new Date(a.kickoff_at) < new Date(b.kickoff_at) ? a : b);
-    if(new Date(earliest.kickoff_at) <= now) w = Math.max(w, wk);
+
+  const weeksWithGames = [
+    ...new Set(
+      GAMES
+        .map(game => game.week)
+        .filter(Boolean)
+    )
+  ];
+
+  weeksWithGames.forEach(weekNumber => {
+    const startedGames = GAMES.filter(
+      game =>
+        game.week === weekNumber &&
+        game.startsAt
+    );
+
+    if(startedGames.length === 0){
+      return;
+    }
+
+    const earliestStart = startedGames.reduce(
+      (earliest, game) =>
+        new Date(game.startsAt) < new Date(earliest.startsAt)
+          ? game
+          : earliest
+    );
+
+    if(new Date(earliestStart.startsAt) <= now){
+      currentWeek = Math.max(
+        currentWeek,
+        weekNumber
+      );
+    }
   });
-  return w;
+
+  return currentWeek;
 }
 
 /* ==========================================================
@@ -1480,7 +1505,7 @@ function renderPickOptionsFor(week, usedTeams, nonConLeft, g5Left){
   const weekGames = GAMES.filter(g => g.week === week);
   const options = [];
   weekGames.forEach(g => {
-    [g.home, g.away].forEach(team => {
+    [g.homeTeam, g.awayTeam].forEach(team => {
       if(!CONFERENCE_TEAMS.includes(team)) return;
       if(usedTeams.has(team) && !(existing && existing.team === team)) return;
       const context = getTeamWeekContext(week, team);
@@ -1574,10 +1599,30 @@ function renderSignupForm(){
     return `<div class="panel"><h3>Signups are closed</h3><p class="hint">Week 1 has locked. If you're a returning player, log in below.</p>${loginFormHTML()}</div>`;
   }
   const week1Games = GAMES.filter(g => g.week === 1);
-  const options = week1Games.filter(g => CONFERENCE_TEAMS.includes(g.home) || CONFERENCE_TEAMS.includes(g.away))
-    .flatMap(g => [g.home, g.away].filter(t => CONFERENCE_TEAMS.includes(t)).map(t => ({ team: t, opp: opponentOf(1, t) })))
-    .filter(o => { const c = classifyPick(1, o.team); return c !== 'ineligible' && c !== 'invalid'; });
+  const options = week1Games
+  .filter(game =>
+    CONFERENCE_TEAMS.includes(game.homeTeam) ||
+    CONFERENCE_TEAMS.includes(game.awayTeam)
+  )
+  .flatMap(game =>
+    [game.homeTeam, game.awayTeam]
+      .filter(team =>
+        CONFERENCE_TEAMS.includes(team)
+      )
+      .map(team => ({
+        team,
+        opp: opponentOf(1, team)
+      }))
+  )
+  .filter(option => {
+    const category =
+      classifyPick(1, option.team);
 
+    return (
+      category !== 'ineligible' &&
+      category !== 'invalid'
+    );
+  });
   return `<div class="panel">
     <h3>Join the Pool</h3>
     <p class="hint">Create your account and submit your Week 1 pick to get started.</p>
