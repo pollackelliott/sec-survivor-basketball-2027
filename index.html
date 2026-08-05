@@ -179,6 +179,7 @@
   .team-name.lost{color:#F7C9C3; text-decoration:line-through; text-decoration-color:var(--red);}
   .result-icon{flex:none; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;}
   .result-icon.win{background:rgba(95,190,140,0.14); color:var(--green);}
+  .result-icon.strike{background:rgba(var(--accent-rgb),0.14); color:var(--gold);}
   .result-icon.loss{background:rgba(226,104,92,0.14); color:var(--red);}
   .result-icon.pending{background:var(--panel-2); color:var(--text-faint);}
   .out-banner{margin:14px 20px 0; padding:11px 14px; background:var(--red-dim); border:1px solid rgba(226,104,92,0.4); border-radius:10px; font-size:12px; color:#f0a29c; text-align:center; font-weight:700;}
@@ -1014,19 +1015,30 @@ function openPlayerSheet(id){
     const pick = p.picks[w];
     const revealed = p.revealed[w];
     const result = p.results[w];
-    const opp = pick ? opponentOf(w+1, pick) : null;
+    const weeklyOutcome = p.weeklyOutcomes[w];
+    const opp = pick ? opponentOf(w + 1, pick) : null;
+    
     let icon = '';
+    
     if(revealed && pick){
-      icon = result === 1 ? `<div class="result-icon win">✓</div>`
-           : result === 0 ? `<div class="result-icon loss">✕</div>`
-           : `<div class="result-icon pending">·</div>`;
-    } else if(!revealed && w+1 === CURRENT_WEEK){
+      if(weeklyOutcome?.state === 'safe'){
+        icon = `<div class="result-icon win">✓</div>`;
+      } else if(weeklyOutcome?.state === 'strike'){
+        icon = `<div class="result-icon strike">!</div>`;
+      } else if(weeklyOutcome?.state === 'eliminated'){
+        icon = `<div class="result-icon loss">✕</div>`;
+      } else {
+        icon = `<div class="result-icon pending">·</div>`;
+      }
+    } else if(!revealed && w + 1 === CURRENT_WEEK){
       icon = `<div class="result-icon pending">?</div>`;
     }
     const label = revealed
       ? (pick ? `${pick}${opp ? ` <span class="opp-context">(vs ${opp})</span>` : ''}` : 'No pick')
       : 'Hidden until Sat 11am';
-    const lost = revealed && result === 0;
+    const lost =
+      revealed &&
+      weeklyOutcome?.state === 'eliminated';
     timeline += `<div class="week-row"><div class="wk">W${w+1}</div>
       <div class="team-chip">${revealed && pick ? `<div class="team-dot" style="--tc:${teamColor(pick)}; --tc2:${teamSecondaryColor(pick)}"></div>`:''}
       <div class="team-name ${!revealed || !pick ? 'empty':''} ${lost?'lost':''}">${label}</div></div>${icon}</div>`;
