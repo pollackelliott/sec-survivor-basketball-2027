@@ -1830,17 +1830,36 @@ function renderDevelopmentMode(){
   document.getElementById('totalCount').textContent = '/ –';
 
   let weekHeaders = '<th class="corner">Player</th>';
+  let weekCells = '';
 
   for(let week = 1; week <= WEEKS; week++){
-    weekHeaders += `<th>Wk ${week}</th>`;
+    weekHeaders += `
+      <th
+        class="wk-head"
+        data-week="${week}"
+      >
+        Wk ${week}
+      </th>
+    `;
+
+    weekCells += `
+      <td
+        class="pick empty"
+        data-week="${week}"
+        title="View Week ${week} schedule"
+      >
+        –
+      </td>
+    `;
   }
 
   document.getElementById('view-grid').innerHTML = `
     <div class="panel">
       <h3>Basketball Application in Development</h3>
+
       <p class="hint">
         The 2027 application is currently being built without a connected backend.
-        The dedicated basketball database will be added after the football season.
+        Select any week below to view its scheduled games.
       </p>
     </div>
 
@@ -1849,6 +1868,7 @@ function renderDevelopmentMode(){
         <thead>
           <tr>${weekHeaders}</tr>
         </thead>
+
         <tbody>
           <tr>
             <td class="name-cell">
@@ -1856,24 +1876,41 @@ function renderDevelopmentMode(){
                 <span class="name-text">2027 Season</span>
               </div>
             </td>
-            ${Array.from({ length: WEEKS }, () => '<td class="pick empty">–</td>').join('')}
+
+            ${weekCells}
           </tr>
         </tbody>
       </table>
     </div>
   `;
 
+  document.querySelectorAll(
+    '#view-grid th.wk-head, #view-grid td.pick'
+  ).forEach(element => {
+    element.addEventListener('click', () => {
+      openWeekSheet(
+        Number(element.dataset.week)
+      );
+    });
+  });
+
   document.getElementById('playersList').innerHTML = `
     <div class="panel">
       <h3>Players</h3>
-      <p class="hint">Player registration will become available when the basketball backend is connected.</p>
+
+      <p class="hint">
+        Player registration will become available when the basketball backend is connected.
+      </p>
     </div>
   `;
 
   document.getElementById('myPickPanel').innerHTML = `
     <div class="panel">
       <h3>My Pick</h3>
-      <p class="hint">Signup, login, and weekly pick submission are disabled during offline development.</p>
+
+      <p class="hint">
+        Signup, login, and weekly pick submission are disabled during offline development.
+      </p>
     </div>
   `;
 
