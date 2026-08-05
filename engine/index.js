@@ -211,5 +211,34 @@ window.SurvivorEngine.Outcomes = {
       recordKey,
       strikesAdded: outcome.strikesAdded || 0
     };
+  },
+    evaluateSeason(weeklyOutcomes, revealed, strikeLimit){
+    let strikes = 0;
+    let eliminatedWeek = null;
+
+    weeklyOutcomes.forEach((outcome, index) => {
+      if(eliminatedWeek !== null || !revealed[index] || !outcome){
+        return;
+      }
+
+      if(outcome.state === 'eliminated'){
+        eliminatedWeek = index + 1;
+        return;
+      }
+
+      if(outcome.state === 'strike'){
+        strikes += outcome.strikesAdded;
+
+        if(strikes >= strikeLimit){
+          eliminatedWeek = index + 1;
+        }
+      }
+    });
+
+    return {
+      alive: eliminatedWeek === null,
+      eliminatedWeek,
+      strikes
+    };
   }
 };
