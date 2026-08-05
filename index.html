@@ -803,7 +803,32 @@ function buildPlayers(){
         revealed.push(row ? row.revealed : false);
       }
     }
-    const results = picks.map((pick, i) => pick ? resultFor(i+1, pick) : null);
+    const weeklyOutcomes = picks.map((pick, index) => {
+  if(!pick){
+    return null;
+  }
+
+  const context = getTeamWeekContext(index + 1, pick);
+
+  if(!context){
+    return null;
+  }
+
+  return window.SurvivorEngine.Outcomes.evaluateWeek(
+    context.games.map(game => game.result),
+    ACTIVE_RULESET.outcomes.records
+  );
+});
+
+const results = weeklyOutcomes.map(outcome => {
+  if(!outcome || outcome.state === 'pending' || outcome.state === 'invalid'){
+    return null;
+  }
+
+  return outcome.state === 'safe'
+    ? 1
+    : 0;
+});
     let eliminatedWeek = null;
     for(let w=0; w<WEEKS; w++){
       if(revealed[w] && results[w] === 0){ eliminatedWeek = w+1; break; }
