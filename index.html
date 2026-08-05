@@ -347,6 +347,8 @@ const SUPABASE_URL = POOL_CONFIG.backend.supabaseUrl;
 const SUPABASE_ANON_KEY = POOL_CONFIG.backend.supabaseAnonKey;
 const ACTIVE_ALLOWANCE_LIMITS =
   ACTIVE_RULESET.eligibility?.allowanceLimits || null;
+const ACTIVE_RULESET_TRACKS_STRIKES =
+  ACTIVE_RULESET.outcomes?.tracksStrikes === true;
 
 function seasonWeek(weekNumber){
   return SEASON_WEEKS.find(
