@@ -976,12 +976,30 @@ function openPlayerSheet(id){
   const p = ALL_PLAYERS.find(x => x.id === id);
   if(!p) return;
   const statRow = `<div class="stat-row">
-    <div class="stat"><div class="v ${p.alive?'':'out-status'}">${p.alive?'ALIVE':'OUT'}</div><div class="l">Status</div></div>
-    ${ACTIVE_ALLOWANCE_LIMITS ? `
-  <div class="stat"><div class="v">${p.isMe ? p.nonConLeft : '—'}</div><div class="l">Non-Con Left</div></div>
-  <div class="stat"><div class="v">${p.isMe ? p.g5Left : '—'}</div><div class="l">G5 Left</div></div>
-` : ''}
-    </div>`;
+  <div class="stat">
+    <div class="v ${p.alive ? '' : 'out-status'}">${p.alive ? 'ALIVE' : 'OUT'}</div>
+    <div class="l">Status</div>
+  </div>
+
+  ${ACTIVE_RULESET_TRACKS_STRIKES ? `
+    <div class="stat">
+      <div class="v">${p.strikes}</div>
+      <div class="l">Strikes</div>
+    </div>
+  ` : ''}
+
+  ${ACTIVE_ALLOWANCE_LIMITS ? `
+    <div class="stat">
+      <div class="v">${p.isMe ? p.nonConLeft : '—'}</div>
+      <div class="l">Non-Con Left</div>
+    </div>
+
+    <div class="stat">
+      <div class="v">${p.isMe ? p.g5Left : '—'}</div>
+      <div class="l">G5 Left</div>
+    </div>
+  ` : ''}
+</div>`;
   const banner = p.alive
     ? ''
     : `<div class="out-banner">ELIMINATED — WEEK ${p.eliminatedWeek}</div>`;
