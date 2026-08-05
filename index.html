@@ -697,6 +697,7 @@ function pickEditableUntilGame(week, game){
 function getTeamWeekContext(week, team){
   return window.SurvivorEngine.Schedule.teamWeekContext(
     GAMES,
+    ACTIVE_SURVIVOR_GRID,
     week,
     team,
     weekDeadline(week)
