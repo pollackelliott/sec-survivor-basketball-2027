@@ -12,6 +12,7 @@ window.RULESET_REGISTRY.football = Object.freeze({
   }),
 
   outcomes: Object.freeze({
+    trackStrikes: false,
     records: Object.freeze({
       '1-0': Object.freeze({
         state: 'safe',
