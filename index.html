@@ -825,15 +825,26 @@ const results = weeklyOutcomes.map(outcome => {
     return null;
   }
 
-  return outcome.state === 'safe'
-    ? 1
-    : 0;
+  if(outcome.state === 'safe'){
+    return 1;
+  }
+
+  if(outcome.state === 'eliminated'){
+    return 0;
+  }
+
+  return null;
 });
-    let eliminatedWeek = null;
-    for(let w=0; w<WEEKS; w++){
-      if(revealed[w] && results[w] === 0){ eliminatedWeek = w+1; break; }
-    }
-    const alive = eliminatedWeek === null;
+
+const seasonOutcome =
+  window.SurvivorEngine.Outcomes.evaluateSeason(
+    weeklyOutcomes,
+    revealed,
+    STRIKE_LIMIT
+  );
+
+const eliminatedWeek = seasonOutcome.eliminatedWeek;
+const alive = seasonOutcome.alive;
 
 const allowances =
   window.SurvivorEngine.Eligibility.remainingAllowances(
