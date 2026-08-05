@@ -2253,7 +2253,7 @@ window.SURVIVOR_GRIDS.secBasketball2027 = {
   seasonYear: 2027,
   totalWeeks: SEC_BASKETBALL_2027_TOTAL_WEEKS,
 
-  teams: {}
+  teams: window.SURVIVOR_GRID_TEAMS.secBasketball2027
 };
 window.ACTIVE_SEASON = {
   profile: window.SEASON_PROFILES.secBasketball2027,
