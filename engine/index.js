@@ -47,32 +47,38 @@ window.SurvivorEngine.Schedule = {
       : gameTime;
   },
 
-  teamWeekContext(games, week, team, deadline){
-    const teamGames = this.gamesForTeam(games, week, team);
+  teamWeekContext(games, survivorGrid, week, team, deadline){
+  const teamGames =
+    window.SurvivorAdapters.Schedule.countingGamesForTeam(
+      games,
+      survivorGrid,
+      team,
+      week
+    );
 
-    if(teamGames.length === 0){
-      return null;
-    }
+  if(teamGames.length === 0){
+    return null;
+  }
 
-    const gameContexts = teamGames.map(game => {
-      const isHome = game.homeTeam === team;
-
-      return {
-        game,
-        opponent: this.opponentForGame(game, team),
-        location: isHome ? 'home' : 'away',
-        result: window.SurvivorEngine.Results.resultForGame(game, team),
-        editableUntil: this.pickEditableUntilGame(deadline, game)
-      };
-    });
+  const gameContexts = teamGames.map(game => {
+    const isHome = game.homeTeam === team;
 
     return {
-      week,
-      team,
-      games: gameContexts,
-      gameCount: gameContexts.length
+      game,
+      opponent: this.opponentForGame(game, team),
+      location: isHome ? 'home' : 'away',
+      result: window.SurvivorEngine.Results.resultForGame(game, team),
+      editableUntil: this.pickEditableUntilGame(deadline, game)
     };
-  },
+  });
+
+  return {
+    week,
+    team,
+    games: gameContexts,
+    gameCount: gameContexts.length
+  };
+},
 
   opponentForGame(game, team){
   if(!game){
