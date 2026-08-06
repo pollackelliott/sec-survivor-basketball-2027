@@ -2001,7 +2001,7 @@ async function refreshAll(){
       SEASON_WEEKS
     );
 
-  CURRENT_WEEK = 1;
+  CURRENT_WEEK = computeCurrentWeek();
 
   renderDevelopmentMode();
   return;
