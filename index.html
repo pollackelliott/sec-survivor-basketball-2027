@@ -885,44 +885,50 @@ let ALL_PLAYERS = [];
 let CURRENT_WEEK = 1;
 
 function computeCurrentWeek(){
-  let currentWeek = 1;
-  const now = new Date();
+  if(!Array.isArray(SEASON_WEEKS) || SEASON_WEEKS.length === 0){
+    return 1;
+  }
 
-  const weeksWithGames = [
-    ...new Set(
-      GAMES
-        .map(game => game.week)
-        .filter(Boolean)
-    )
-  ];
+  const timezone =
+    ACTIVE_SEASON?.profile?.season?.timezone ||
+    'America/Chicago';
 
-  weeksWithGames.forEach(weekNumber => {
-    const startedGames = GAMES.filter(
-      game =>
-        game.week === weekNumber &&
-        game.startsAt
-    );
-
-    if(startedGames.length === 0){
-      return;
+  const dateParts = new Intl.DateTimeFormat(
+    'en-US',
+    {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     }
+  ).formatToParts(new Date());
 
-    const earliestStart = startedGames.reduce(
-      (earliest, game) =>
-        new Date(game.startsAt) < new Date(earliest.startsAt)
-          ? game
-          : earliest
-    );
+  const partValue = type =>
+    dateParts.find(part => part.type === type)?.value;
 
-    if(new Date(earliestStart.startsAt) <= now){
-      currentWeek = Math.max(
-        currentWeek,
-        weekNumber
-      );
-    }
-  });
+  const today = [
+    partValue('year'),
+    partValue('month'),
+    partValue('day')
+  ].join('-');
 
-  return currentWeek;
+  const matchingWeek = SEASON_WEEKS.find(
+    week =>
+      today >= week.startsOn &&
+      today <= week.endsOn
+  );
+
+  if(matchingWeek){
+    return matchingWeek.week;
+  }
+
+  if(today < SEASON_WEEKS[0].startsOn){
+    return 1;
+  }
+
+  return SEASON_WEEKS[
+    SEASON_WEEKS.length - 1
+  ].week;
 }
 
 /* ==========================================================
