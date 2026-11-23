@@ -1,9 +1,9 @@
-name: Preview SEC Basketball Site
+name: Deploy SEC Basketball Site
 
 on:
   push:
     branches:
-      - build/sec-basketball-2027
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: sec-basketball-pages-preview
+  group: sec-basketball-pages-production
   cancel-in-progress: true
 
 jobs:
@@ -30,6 +30,6 @@ jobs:
         with:
           path: .
 
-      - name: Deploy preview to GitHub Pages
+      - name: Deploy site to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
