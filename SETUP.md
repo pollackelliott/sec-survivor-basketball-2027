@@ -166,3 +166,8 @@ The build branch and live Supabase project passed the following checks:
 - Score-sync GitHub Action authenticated with the repository secret and completed successfully without changing preseason results.
 
 Supabase's Leaked Password Protection advisor warning is expected on this project because that feature is available only on Pro and above. It is not a blocker for the Free-plan pool.
+
+
+## Final manual launch check
+
+- **Password reset round trip passed on November 23, 2026.** The reset email returned to the GitHub Pages basketball site, the new-password screen appeared, the password was updated, and login succeeded afterward.
