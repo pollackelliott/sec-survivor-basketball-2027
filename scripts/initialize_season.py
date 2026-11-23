@@ -14,8 +14,8 @@ The midweek date printed in row 2 is a survivor-slot label, not a promise that
 every game is Tuesday. ESPN matching therefore checks both that Tuesday and the
 following Wednesday.
 
-ESPN is used to resolve exact tipoff timestamps and confirm home/away. The Excel
-grid remains authoritative for survivor-week membership.
+ESPN may later be used to resolve exact tipoff timestamps and reconfirm home/away.
+The Excel grid is authoritative for survivor-week membership and scheduled dates.
 
 Environment variables required for a live initialization:
   SUPABASE_URL
@@ -479,7 +479,7 @@ def verify_database(
     )
     db_games = get_rows(
         base_url, secret_key, "games",
-        {"select": "week,slot,away,home,tipoff_at", "order": "week.asc,tipoff_at.asc"},
+        {"select": "week,slot,away,home,scheduled_date,tipoff_at", "order": "week.asc,scheduled_date.asc,away.asc"},
     )
 
     if {
@@ -492,10 +492,10 @@ def verify_database(
         fail("Post-write verification failed for weeks table")
 
     if {
-        (row["week"], row["slot"], row["away"], row["home"])
+        (row["week"], row["slot"], row["away"], row["home"], row["scheduled_date"])
         for row in db_games
     } != {
-        (row["week"], row["slot"], row["away"], row["home"])
+        (row["week"], row["slot"], row["away"], row["home"], row["scheduled_date"])
         for row in games
     }:
         fail("Post-write verification failed for games table")
@@ -543,12 +543,7 @@ def main() -> None:
     parser.add_argument(
         "--parse-only",
         action="store_true",
-        help="Validate and normalize the Excel workbook without calling ESPN/Supabase.",
-    )
-    parser.add_argument(
-        "--validate-only",
-        action="store_true",
-        help="Validate workbook + ESPN matching without writing Supabase.",
+        help="Validate and normalize the Excel workbook without writing Supabase.",
     )
     args = parser.parse_args()
 
@@ -563,16 +558,25 @@ def main() -> None:
         "Weeks 2-10 midweek bye."
     )
 
-    if args.parse_only:
-        print("Parse-only mode complete; no ESPN or Supabase calls made.")
-        return
-
-    games = resolve_espn(parsed)
+    games = [
+        {
+            "week": row["week"],
+            "slot": row["slot"],
+            "away": row["away"],
+            "home": row["home"],
+            "scheduled_date": row["date"],
+            "tipoff_at": None,
+            "away_score": None,
+            "home_score": None,
+            "winner": None,
+            "is_final": False,
+        }
+        for row in parsed["games"]
+    ]
     weeks = build_week_rows(parsed)
-    print(f"ESPN resolved all {len(games)} survivor games.")
 
-    if args.validate_only:
-        print("Validation-only mode complete; no Supabase changes made.")
+    if args.parse_only:
+        print("Parse-only mode complete; no Supabase changes made.")
         return
 
     base_url = os.environ["SUPABASE_URL"].rstrip("/")
@@ -591,8 +595,9 @@ def main() -> None:
         workbook, parsed, weeks, games, base_url, publishable_key
     )
 
-    print("SEC Survivor Basketball 2027 initialization complete.")
+    print("SEC Survivor Basketball 2027 schedule initialization complete.")
     print("Database verification passed.")
+    print("Exact tipoff timestamps remain nullable until published and synced from ESPN.")
     print("Generated app-config.js and data/normalized-schedule.json.")
 
 
