@@ -16,3 +16,15 @@ The uploaded workbook uses sheet **SEC** and this layout:
 The importer must validate reciprocal conference matchups and must never silently invent a missing matchup.
 
 The original XLSX should be stored in this `data/` folder before the season initializer is run.
+
+
+## Preserved normalized schedule
+
+Because the original Excel workbook is a binary attachment rather than a normal text file, the repository also stores `data/normalized-schedule.json` as a durable reconstruction copy of the 2027 survivor schedule loaded into Supabase.
+
+The source workbook used for this build was:
+
+- Filename: `2027 SEC Basketball Schedule Grid.xlsx`
+- SHA-256: `f85cf6ad9fe0fedb4db5956f88aa8546e6f490a95a96f89cc5d79b2dbc37412b`
+
+If a future workbook with the same filename is supplied, compare its SHA-256 before assuming it is the same source file.
