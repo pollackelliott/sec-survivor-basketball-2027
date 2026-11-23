@@ -23,10 +23,10 @@ jobs:
           node-version: '22'
 
       - name: Check Python syntax
-        run: python -m py_compile scripts/initialize_season.py tests/test_gameplay_model.py
+        run: python -m py_compile scripts/initialize_season.py scripts/update_scores.py tests/test_gameplay_model.py tests/test_score_sync.py
 
       - name: Run gameplay behavior tests
-        run: python -m unittest tests/test_gameplay_model.py -v
+        run: python -m unittest tests/test_gameplay_model.py tests/test_score_sync.py -v
 
       - name: Check browser JavaScript syntax
         shell: bash
@@ -53,7 +53,16 @@ jobs:
           assert "public.admin_set_week_window" in schema
           assert "opponent_classification" not in schema
           assert "g5" not in schema.lower()
+          updater = Path("scripts/update_scores.py").read_text(encoding="utf-8")
+          frontend = Path("index.html").read_text(encoding="utf-8")
+          score_workflow = Path(".github/workflows/update-scores.yml").read_text(encoding="utf-8")
+
           assert "supabasePublishableKey" in app
           assert "three strikes" in gameplay.lower()
+          assert "candidate_days" in updater
+          assert "SUPABASE_SECRET_KEY" in score_workflow
+          assert "opponent_classification" not in frontend
+          assert "Non-Con Left" not in frontend
+          assert "G5 Left" not in frontend
           print("Basketball schema/build invariants passed.")
           PY
