@@ -20,6 +20,8 @@ In GitHub:
 
 The repository contains `.github/workflows/preview-pages.yml`. While development remains on the build branch, pushes to `build/sec-basketball-2027` deploy the preview site.
 
+Status: **Pages enabled in repository settings on November 23, 2026.**
+
 ## 2. Configure Supabase Auth for this pool
 
 The app intentionally uses immediate email/password signup, matching the football survivor UX.
