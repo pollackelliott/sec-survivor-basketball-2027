@@ -74,6 +74,7 @@ create table public.picks (
 );
 
 create index picks_player_idx on public.picks(player_id);
+create index picks_week_idx on public.picks(week);
 create index picks_player_team_idx on public.picks(player_id, team);
 
 create table public.admins (
