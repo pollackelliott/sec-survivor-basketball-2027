@@ -51,6 +51,13 @@
   .slot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:16px 0 5px;}
   .admin-window-grid{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0 14px;}
   .admin-window-grid input,.admin-window-grid select{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--hair);color:var(--text);border-radius:7px;padding:8px 9px;}
+  table.grid tr.placeholder-row td{height:31px;background:rgba(255,255,255,.012);border-bottom:1px solid rgba(255,255,255,.07);color:transparent;pointer-events:none;}
+  table.grid tr.placeholder-row td.name-cell{background:rgba(255,255,255,.012);}
+  table.grid tr.placeholder-row:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .mini-byes-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:12px 20px 4px;color:var(--text-dim);font-size:12px;}
+  .mini-byes-label{font-weight:800;color:var(--text);}
+  .mini-bye-chip{display:inline-block;padding:2px 7px;border-radius:6px;font-weight:800;font-size:11px;border:1px solid rgba(255,255,255,.12);}
+
 </style>
 </head>
 <body>
@@ -72,6 +79,22 @@ function gameOpponent(g,team){return g.home===team?g.away:g.home;}
 function teamScheduleText(w,team){
   const gs=gamesForTeam(w,team).slice().sort(function(a,b){return a.slot==='midweek'?-1:b.slot==='midweek'?1:0;});
   return gs.map(function(g){return (g.away===team?'at ':'vs. ')+teamDisplay(gameOpponent(g,team));}).join(' · ');
+}
+function miniByeTeams(week){
+  if(week===1)return [];
+  const midweekTeams=new Set();
+  weekGames(week).filter(function(g){return g.slot==='midweek';}).forEach(function(g){
+    midweekTeams.add(g.away);midweekTeams.add(g.home);
+  });
+  return CONFERENCE_TEAMS.filter(function(team){return !midweekTeams.has(team);}).sort();
+}
+function miniByeHTML(week){
+  if(week===1)return '<div class="mini-byes-line"><span class="mini-byes-label">Mini-byes:</span><span>—</span></div>';
+  const teams=miniByeTeams(week);
+  if(!teams.length)return '<div class="mini-byes-line"><span class="mini-byes-label">Mini-byes:</span><span>None</span></div>';
+  return '<div class="mini-byes-line"><span class="mini-byes-label">Mini-byes:</span>'+teams.map(function(team){
+    return '<span class="mini-bye-chip" style="background:'+teamColor(team)+';color:'+teamSecondaryColor(team)+'">'+esc(teamDisplay(team))+'</span>';
+  }).join('')+'</div>';
 }
 function weekComplete(w){const gs=weekGames(w);return gs.length>0&&gs.every(function(g){return !!g.is_final;});}
 function formatCentral(iso){
@@ -191,7 +214,7 @@ function renderGrid(){
   const ordered=ALL_PLAYERS.slice().sort(comparePlayers);
   let head='<th class="corner">Player</th>';
   for(let w=1;w<=WEEKS;w++)head+='<th class="wk-head" data-week="'+w+'">Wk '+w+'</th>';
-  const rows=ordered.map(function(p){
+  const playerRows=ordered.map(function(p){
     let cells='';
     for(let w=1;w<=WEEKS;w++){
       const afterElim=p.eliminatedWeek&&w>p.eliminatedWeek;
@@ -211,6 +234,12 @@ function renderGrid(){
     const fanStyle=p.fanOf?'--tc:'+teamColor(p.fanOf)+';--tc2:'+teamSecondaryColor(p.fanOf):'';
     return '<tr class="'+(p.alive?'':'dead')+'" data-player="'+p.id+'"><td class="name-cell" data-player="'+p.id+'"><span class="team-dot '+(p.fanOf?'':'empty-fan')+'" style="'+fanStyle+'"></span><span class="name-text">'+esc(p.name)+'</span></td>'+cells+'</tr>';
   }).join('');
+  const placeholderCount=Math.max(0,18-ordered.length);
+  const placeholderRows=Array.from({length:placeholderCount},function(){
+    let cells='';for(let w=1;w<=WEEKS;w++)cells+='<td></td>';
+    return '<tr class="placeholder-row" aria-hidden="true"><td class="name-cell">&nbsp;</td>'+cells+'</tr>';
+  }).join('');
+  const rows=playerRows+placeholderRows;
   document.getElementById('view-grid').innerHTML='<div class="grid-hint">Tap a player or week for details</div><div class="grid-wrap"><table class="grid"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
   document.querySelectorAll('#view-grid .name-cell').forEach(function(el){el.addEventListener('click',function(){openPlayer(el.dataset.player);});});
   document.querySelectorAll('#view-grid th.wk-head').forEach(function(el){el.addEventListener('click',function(){openWeek(Number(el.dataset.week));});});
@@ -279,7 +308,8 @@ function openWeek(week){
     games+='<div class="week-section"><div class="slot-label">'+(slot==='midweek'?'Midweek':'Saturday')+'</div>'+gs.map(gameLine).join('')+'</div>';
   });
   const note=info&&info.lock_note?'<div class="current-pick-banner" style="margin:12px 20px 0">'+esc(info.lock_note)+'</div>':'';
-  document.getElementById('sheetContent').innerHTML='<div class="sheet-head"><div class="name">Week '+week+'</div></div>'+note+picks+games;
+  const miniByes=miniByeHTML(week);
+  document.getElementById('sheetContent').innerHTML='<div class="sheet-head"><div class="name">Week '+week+'</div></div>'+note+picks+miniByes+games;
   showSheet();
 }
 

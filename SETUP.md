@@ -81,16 +81,16 @@ Create:
 
 The scheduled score workflow sends the secret on the `apikey` header only.
 
-## 5. Week 1 stays closed until launch
+## 5. Week 1 signup + pick opening
 
-Week 1 is intentionally seeded with:
+Week 1 was initially seeded closed during QA.
 
-- Opens: NULL
-- Locks: Saturday, January 2, 2027 at 10:59 AM Central
+Production behavior is now:
 
-The commissioner can set the opening timestamp from the site's Commissioner panel when the pool is ready for signups.
-
-Do not open Week 1 until visual QA, auth testing, and commissioner testing are complete.
+- Signup and the Week 1 pick open simultaneously.
+- A new player creates an account and submits the Week 1 pick in the same flow.
+- Week 1 locks Saturday, January 2, 2027 at 10:59 AM Central.
+- The live opening timestamp is stored in Supabase `public.weeks.opens_at`.
 
 ## 6. Normal weekly windows
 
