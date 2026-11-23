@@ -1,0 +1,10 @@
+{
+  "year": 2027,
+  "weeks": 10,
+  "conference": "SEC",
+  "sport": "basketball",
+  "week_1_date": "2027-01-02",
+  "default_week_open_time": "Monday 05:00 America/Chicago",
+  "default_week_lock_time": "Tuesday 17:59 America/Chicago",
+  "schedule_file": "2027 SEC Basketball Schedule Grid.xlsx"
+}

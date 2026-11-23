@@ -1,0 +1,71 @@
+name: Validate SEC Basketball Build
+
+on:
+  push:
+    branches:
+      - build/sec-basketball-2027
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install test dependencies
+        run: pip install requests
+
+      - name: Check Python syntax
+        run: python -m py_compile scripts/initialize_season.py scripts/update_scores.py tests/test_gameplay_model.py tests/test_score_sync.py
+
+      - name: Run gameplay behavior tests
+        run: python -m unittest tests/test_gameplay_model.py tests/test_score_sync.py -v
+
+      - name: Check browser JavaScript syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          script = html.rsplit("<script>", 1)[1].split("</script>", 1)[0]
+          Path("/tmp/sec-basketball.js").write_text(script, encoding="utf-8")
+          PY
+          node --check /tmp/sec-basketball.js
+
+      - name: Check schema invariants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          schema = Path("supabase/schema.sql").read_text(encoding="utf-8")
+          gameplay = Path("GAMEPLAY.md").read_text(encoding="utf-8")
+          app = Path("app-config.js").read_text(encoding="utf-8")
+
+          assert "public.pick_week_status" in schema
+          assert "private.player_eliminated_week_raw" in schema
+          assert "public.pool_end_week()" in schema
+          assert "public.admin_set_week_window" in schema
+          assert "opponent_classification" not in schema
+          assert "g5" not in schema.lower()
+          updater = Path("scripts/update_scores.py").read_text(encoding="utf-8")
+          frontend = Path("index.html").read_text(encoding="utf-8")
+          score_workflow = Path(".github/workflows/update-scores.yml").read_text(encoding="utf-8")
+
+          assert "supabasePublishableKey" in app
+          assert "three strikes" in gameplay.lower()
+          assert "candidate_days" in updater
+          assert "SUPABASE_SECRET_KEY" in score_workflow
+          assert "opponent_classification" not in frontend
+          assert "Non-Con Left" not in frontend
+          assert "G5 Left" not in frontend
+          print("Basketball schema/build invariants passed.")
+          PY
