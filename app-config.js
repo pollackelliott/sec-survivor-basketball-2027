@@ -3,6 +3,6 @@
 window.SURVIVOR_APP_CONFIG = {
   year: 2027,
   weeks: 10,
-  supabaseUrl: '',
-  supabasePublishableKey: ''
+  supabaseUrl: 'https://rlsxmkxwruuzimskvwrr.supabase.co',
+  supabasePublishableKey: 'sb_publishable_yiDR7mNNWGUx2iXiz5C_1A__obP5IJI'
 };
