@@ -22,6 +22,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install test dependencies
+        run: pip install requests
+
       - name: Check Python syntax
         run: python -m py_compile scripts/initialize_season.py scripts/update_scores.py tests/test_gameplay_model.py tests/test_score_sync.py
 
