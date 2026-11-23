@@ -42,15 +42,401 @@
   .game-row:has(.game-team.winner) .game-team:not(.winner) .game-score{color:var(--text-dim);}
   .game-team.winner .game-score{color:var(--text);font-weight:900;font-size:1.08em;}
   .game-row:has(.game-team.winner) > .game-at + .game-team .game-score::after{content:' F';color:var(--text-faint);font-size:10px;font-weight:900;letter-spacing:.05em;margin-left:2px;}
+
+  td.pick.strike{background:rgba(242,194,48,.18);color:#FFE89A;font-weight:800;}
+  td.pick.strike.out{text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px;}
+  .result-icon.strike{background:rgba(242,194,48,.16);color:var(--gold);}
+  .strike-count{color:var(--gold);font-weight:800;}
+  .week-record{font-size:10px;color:var(--text-faint);margin-left:5px;font-weight:700;}
+  .slot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:16px 0 5px;}
+  .admin-window-grid{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0 14px;}
+  .admin-window-grid input,.admin-window-grid select{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--hair);color:var(--text);border-radius:7px;padding:8px 9px;}
 </style>
 </head>
 <body>
 <div class="wrap"><header><div class="h-title">SEC SURVIVOR<small>BASKETBALL — <span id="seasonYearLabel"></span></small></div><div><div class="h-tally"><span class="num" id="aliveCount">–</span><span class="of" id="totalCount">/ –</span></div><div class="h-tally-label">Still Standing</div></div></header><div class="tabs"><div class="tab active" data-tab="grid">Picks Grid</div><div class="tab" data-tab="players">Players</div><div class="tab" data-tab="mypick">My Pick</div><div class="tab" data-tab="rules">Rules</div></div><main><div id="loadingMsg" class="loading">Loading the pool…</div><div id="errorMsg" class="error" style="display:none;"></div><div class="view active" id="view-grid"></div><div class="view" id="view-players"><div id="playersList"></div></div><div class="view" id="view-mypick"><div id="myPickPanel"></div></div><div class="view" id="view-rules"><div class="panel"><h3>SEC Survivor - Basketball</h3><div class="current-pick-banner contact-banner" style="text-align:center; margin-top:12px;">Email pollack.elliott@gmail.com with any questions<br>Venmo @elliott-pollack $25 to play</div><ul style="margin:16px 0; padding-left:18px; font-size:14px; line-height:1.6;"><li>Pick one SEC team each survivor week</li><li>You may only pick each school once all season</li><li>Weeks 2–10: 2–0 is safe, 1–1 is one strike, 0–2 is elimination</li><li>Three strikes eliminates a player</li><li>Teams without a midweek game that week are ineligible</li><li>Week 1 is Saturday-only: a win is safe; a loss is one strike; nobody can be eliminated by the Week 1 game result</li></ul><div class="field"><label>Deadlines</label></div><ul style="margin:0; padding-left:18px; font-size:14px; line-height:1.6;"><li>Week 1 locks at <strong>10:59am Central on Saturday, January 2</strong></li><li>Weeks 2–10 normally open Monday at <strong>5:00am Central</strong> and lock Tuesday at <strong>5:59pm Central</strong></li><li>The commissioner may set an earlier weekly lock when an early Tuesday tip requires it</li><li>Picks reveal together at the weekly lock time</li><li>A missed pick at lock is immediate elimination</li></ul></div></div></main><div class="commish-link" id="commishLink">Commissioner</div></div><div class="overlay" id="overlay"></div><div class="sheet" id="sheet"><div class="sheet-top"><div class="close-btn" id="closeSheet">✕</div><div class="sheet-handle"></div></div><div class="sheet-scroll" id="sheetScroll"><div id="sheetContent"></div></div></div>
 <script>
-const APP_CONFIG=window.SURVIVOR_APP_CONFIG||{};const SUPABASE_URL=APP_CONFIG.supabaseUrl||'';const SUPABASE_PUBLISHABLE_KEY=APP_CONFIG.supabasePublishableKey||'';const SEASON_YEAR=Number(APP_CONFIG.year)||2027,WEEKS=Number(APP_CONFIG.weeks)||10;if(!SUPABASE_URL||!SUPABASE_PUBLISHABLE_KEY)throw new Error('Season has not been initialized: app-config.js is missing the Supabase public configuration.');document.getElementById('seasonYearLabel').textContent=SEASON_YEAR||'—';document.title='SEC Survivor Basketball'+(SEASON_YEAR?' '+SEASON_YEAR:'');const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const CONFERENCE_TEAMS=['Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU','Mississippi State','Missouri','Oklahoma','Ole Miss','South Carolina','Tennessee','Texas','Texas A&M','Vanderbilt'];const TEAM_COLORS={'Alabama':'#9E1B32','Arkansas':'#9D2235','Auburn':'#0C2340','Florida':'#0021A5','Georgia':'#BA0C2F','Kentucky':'#0033A0','LSU':'#461D7C','Mississippi State':'#660000','Missouri':'#000000','Oklahoma':'#841617','Ole Miss':'#14213D','South Carolina':'#73000A','Tennessee':'#FF8200','Texas':'#BF5700','Texas A&M':'#500000','Vanderbilt':'#866D4B'};const TEAM_SECONDARY_COLORS={'Alabama':'#FFFFFF','Arkansas':'#FFFFFF','Auburn':'#E87722','Florida':'#FA4616','Georgia':'#000000','Kentucky':'#FFFFFF','LSU':'#FDD023','Mississippi State':'#FFFFFF','Missouri':'#F1B82D','Oklahoma':'#FDF9D8','Ole Miss':'#CE1126','South Carolina':'#000000','Tennessee':'#FFFFFF','Texas':'#FFFFFF','Texas A&M':'#FFFFFF','Vanderbilt':'#000000'};function teamColor(name){return TEAM_COLORS[name]||'#5d636e';}function teamSecondaryColor(name){return TEAM_SECONDARY_COLORS[name]||'#F5F7FB';}function colorLuminance(hex){const h=hex.replace('#',''),v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255).map(c=>c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4));return .2126*v[0]+.7152*v[1]+.0722*v[2];}function colorContrast(a,b){const x=colorLuminance(a),y=colorLuminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}function pendingPickStyle(name){const bg=teamColor(name),preferred=teamSecondaryColor(name),preferredContrast=colorContrast(preferred,bg),whiteContrast=colorContrast('#FFFFFF',bg),blackContrast=colorContrast('#000000',bg);let fg=preferred;if(name!=='Tennessee'&&name!=='Ole Miss'&&preferredContrast<3)fg=whiteContrast>=blackContrast?'#FFFFFF':'#000000';return `background:${bg};color:${fg};`;}const TEAM_ABBR={'Alabama':'ALA','Arkansas':'ARK','Auburn':'AUB','Florida':'UF','Georgia':'UGA','Kentucky':'UK','LSU':'LSU','Mississippi State':'MSU','Missouri':'MIZ','Oklahoma':'OU','Ole Miss':'MISS','South Carolina':'USC','Tennessee':'TENN','Texas':'TEX','Texas A&M':'A&M','Vanderbilt':'VU'};function teamAbbr(name){return TEAM_ABBR[name]||(name?name.slice(0,4).toUpperCase():'');}const TEAM_DISPLAY={'Mississippi State':'Miss. State','South Carolina':'S. Carolina'};function teamDisplay(name){return TEAM_DISPLAY[name]||name;}const COMMISSIONER_EMAIL='pollack.elliott@gmail.com';let IDENTITY=null;let PASSWORD_RECOVERY_ACTIVE=false;sb.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){PASSWORD_RECOVERY_ACTIVE=true;IDENTITY=session?{id:session.user.id}:null;showPasswordResetPanel();return;}IDENTITY=session?{id:session.user.id}:null;if(event!=='INITIAL_SESSION')refreshAll();});let GAMES=[],CLASSIFICATION={},PLAYERS_RAW=[],BOARD_ROWS=[],MY_PICKS=[],WEEK_REOPEN_TIMES={},WEEK_DEADLINES={};async function loadAll(){const{data:{session}}=await sb.auth.getSession();IDENTITY=session?{id:session.user.id}:null;const[{data:games,error:e1},{data:cls,error:e2},{data:players,error:e3},{data:board,error:e4}]=await Promise.all([sb.from('games').select('*'),sb.from('opponent_classification').select('*'),sb.from('players_public').select('*'),sb.rpc('get_public_board')]);if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;if(e4)throw e4;GAMES=games||[];CLASSIFICATION={};(cls||[]).forEach(r=>CLASSIFICATION[r.opponent]=r);PLAYERS_RAW=players||[];BOARD_ROWS=board||[];WEEK_DEADLINES={};const deadlineResults=await Promise.all(Array.from({length:WEEKS},(_,i)=>sb.rpc('week_deadline',{p_week:i+1})));deadlineResults.forEach((r,i)=>{if(!r.error&&r.data)WEEK_DEADLINES[i+1]=new Date(r.data);});WEEK_REOPEN_TIMES={};const reopenResults=await Promise.all(Array.from({length:WEEKS},(_,i)=>sb.rpc('week_reopen_time',{p_week:i+1})));reopenResults.forEach((r,i)=>{if(!r.error&&r.data)WEEK_REOPEN_TIMES[i+1]=new Date(r.data);});if(IDENTITY){const{data:mine,error:e5}=await sb.rpc('get_my_picks');MY_PICKS=e5?[]:(mine||[]);}else MY_PICKS=[];}function gameFor(week,team){return GAMES.find(g=>g.week===week&&(g.home===team||g.away===team))||null;}function opponentOf(week,team){const g=gameFor(week,team);return g?(g.home===team?g.away:g.home):null;}function classifyPick(week,team){const opp=opponentOf(week,team);if(!opp)return'invalid';if(CONFERENCE_TEAMS.includes(opp))return'conference';const row=CLASSIFICATION[opp];if(!row||!row.eligible)return'ineligible';return row.category;}function weekDeadline(week){return WEEK_DEADLINES[week]||null;}function weekReopenTime(week){return WEEK_REOPEN_TIMES[week]||null;}function pickEditableUntil(week,team){const g=gameFor(week,team);if(!g)return null;const wd=weekDeadline(week),ko=new Date(g.kickoff_at);return wd&&wd<ko?wd:ko;}function resultFor(week,team){const g=gameFor(week,team);if(!g||!g.winner)return null;return g.winner===team?1:0;}function opponentContextHTML(week,team){const g=gameFor(week,team);if(!g)return'';const isAway=g.away===team,opponent=isAway?g.home:g.away;return `<span class="opponent-context">${isAway?'@':'vs.'} ${opponent}</span>`;}function teamCategoryClass(team){if(CONFERENCE_TEAMS.includes(team))return'opp-conference';const row=CLASSIFICATION[team];return!row||!row.eligible?'opp-ineligible':'opp-noncon';}function nonConferenceSideOf(g){const a=CONFERENCE_TEAMS.includes(g.away),h=CONFERENCE_TEAMS.includes(g.home);if(a&&h)return null;return a?g.home:g.away;}function gameIsIneligible(g){const opp=nonConferenceSideOf(g);return opp?(!CLASSIFICATION[opp]||!CLASSIFICATION[opp].eligible):false;}function gamePillHTML(g){const opp=nonConferenceSideOf(g);if(!opp)return'';const row=CLASSIFICATION[opp];if(!row||!row.eligible)return'';return row.category==='g5'?'<span class="opt-tag g5">G5</span>':'<span class="opt-tag nc">Non-Con</span>';}function buildPlayers(){const now=new Date(),players=PLAYERS_RAW.map(p=>{const rows=BOARD_ROWS.filter(r=>r.player_id===p.id).sort((a,b)=>a.week-b.week),isMe=IDENTITY&&IDENTITY.id===p.id,picks=[],revealed=[];for(let w=1;w<=WEEKS;w++){if(isMe){const mine=MY_PICKS.find(m=>m.week===w);picks.push(mine?mine.team:null);revealed.push(true);}else{const row=rows.find(r=>r.week===w);picks.push(row?row.team:null);revealed.push(row?row.revealed:!!(weekDeadline(w)&&now>=weekDeadline(w)));}}const results=picks.map((pick,i)=>pick?resultFor(i+1,pick):null);return{id:p.id,name:p.name,fanOf:p.fan_of,alive:true,picks,revealed,results,eliminatedWeek:null,nonConLeft:3,g5Left:1,isMe};}),active=new Set(players.map(p=>p.id)),weeks=[...new Set(GAMES.map(g=>g.week))].sort((a,b)=>a-b);POOL_END_WEEK=null;POOL_WINNER_ID=null;for(const w of weeks){const entrants=players.filter(p=>active.has(p.id));if(!entrants.length)break;let pending=false;const losers=[];entrants.forEach(p=>{const pick=p.picks[w-1],result=p.results[w-1];if(!pick){const deadline=weekDeadline(w);if(deadline&&now>=deadline)losers.push(p);else pending=true;}else if(result===0)losers.push(p);else if(result===null)pending=true;});losers.forEach(p=>{if(p.eliminatedWeek===null)p.eliminatedWeek=w;active.delete(p.id);});if(pending)break;if(active.size<=1){POOL_END_WEEK=w;POOL_WINNER_ID=active.size===1?[...active][0]:null;break;}}players.forEach(p=>{p.alive=p.eliminatedWeek===null;let nonConLeft=3,g5Left=1;p.picks.forEach((pick,i)=>{if(!pick)return;const cat=classifyPick(i+1,pick);if(cat==='g5'||cat==='not_g5')nonConLeft--;if(cat==='g5')g5Left--;});p.nonConLeft=nonConLeft;p.g5Left=g5Left;});return players;}let ALL_PLAYERS=[],CURRENT_WEEK=1,POOL_END_WEEK=null,POOL_WINNER_ID=null;function playerNameParts(name){const parts=(name||'').trim().split(/\s+/).filter(Boolean);if(!parts.length)return{last:'',first:'',suffix:''};const suffixes=new Set(['jr','jr.','sr','sr.','ii','iii','iv','v']);let lastIndex=parts.length-1;if(lastIndex>0&&suffixes.has(parts[lastIndex].toLowerCase()))lastIndex--;return{last:parts[lastIndex]||'',first:parts.slice(0,lastIndex).join(' '),suffix:parts.slice(lastIndex+1).join(' ')}}function comparePlayerNames(aName,bName){const a=playerNameParts(aName),b=playerNameParts(bName);return a.last.localeCompare(b.last,undefined,{sensitivity:'base'})||a.first.localeCompare(b.first,undefined,{sensitivity:'base'})||a.suffix.localeCompare(b.suffix,undefined,{sensitivity:'base'})||(aName||'').localeCompare(bName||'',undefined,{sensitivity:'base'});}function comparePlayers(a,b){if(a.alive!==b.alive)return a.alive?-1:1;if(!a.alive&&!b.alive){const elim=(b.eliminatedWeek||0)-(a.eliminatedWeek||0);if(elim)return elim;const aNoPick=!a.picks[(a.eliminatedWeek||0)-1],bNoPick=!b.picks[(b.eliminatedWeek||0)-1];if(aNoPick!==bNoPick)return aNoPick?1:-1;}return comparePlayerNames(a.name,b.name);}function computeCurrentWeek(){let w=1;const now=new Date(),weeks=[...new Set(GAMES.map(g=>g.week))];weeks.forEach(wk=>{const gs=GAMES.filter(g=>g.week===wk),e=gs.reduce((a,b)=>new Date(a.kickoff_at)<new Date(b.kickoff_at)?a:b);if(new Date(e.kickoff_at)<=now)w=Math.max(w,wk);});return w;}let gridHasAutoPositioned=false;function positionGridForCurrentWeek(){if(gridHasAutoPositioned)return;const wrap=document.querySelector('#view-grid .grid-wrap');if(!wrap)return;gridHasAutoPositioned=true;if(wrap.scrollWidth<=wrap.clientWidth)return;const targetWeek=Math.max(1,CURRENT_WEEK-1);const target=wrap.querySelector(`th.wk-head[data-week="${targetWeek}"]`);const corner=wrap.querySelector('th.corner');if(!target||!corner)return;requestAnimationFrame(()=>{const wrapRect=wrap.getBoundingClientRect();const targetRect=target.getBoundingClientRect();const desiredLeft=wrapRect.left+corner.getBoundingClientRect().width;wrap.scrollLeft=Math.max(0,wrap.scrollLeft+(targetRect.left-desiredLeft));});}function renderGrid(){const ordered=[...ALL_PLAYERS].sort(comparePlayers),shownWeeks=WEEKS;let head='<th class="corner">Player</th>';for(let w=1;w<=shownWeeks;w++)head+=`<th class="wk-head" data-week="${w}">Wk ${w}</th>`;const bodyRows=ordered.map(p=>{let cells='';for(let w=0;w<shownWeeks;w++){const wk=w+1,pastElim=!p.alive&&p.eliminatedWeek&&wk>p.eliminatedWeek,pick=p.picks[w],result=p.results[w],isRevealed=p.revealed[w];if(pastElim)cells+=`<td class="pick dead-week" data-week="${wk}">—</td>`;else if(!isRevealed&&wk===CURRENT_WEEK)cells+=`<td class="pick hidden-pick" data-week="${wk}" title="Hidden until Sat 11am CT">•</td>`;else if(!pick)cells+=`<td class="pick empty" data-week="${wk}">–</td>`;else if(result===0)cells+=`<td class="pick loss" data-week="${wk}" title="${pick}">${teamAbbr(pick)}</td>`;else if(result===1)cells+=`<td class="pick win" data-week="${wk}" title="${pick}">${teamAbbr(pick)}</td>`;else cells+=`<td class="pick neutral" data-week="${wk}" title="${pick}"><span class="pending-pill" style="${pendingPickStyle(pick)}">${teamAbbr(pick)}</span></td>`;}return `<tr class="${p.alive?'alive':'dead'}"><td class="name-cell" data-id="${p.id}"><div class="name-inner"><div class="team-dot${p.fanOf?'':' empty-fan'}" style="--tc:${teamColor(p.fanOf)}; --tc2:${teamSecondaryColor(p.fanOf)}"></div><div class="name-text">${p.name}</div></div></td>${cells}</tr>`;}).join('');document.getElementById('view-grid').innerHTML=ordered.length?`<div class="grid-hint">Tap any player, week, or pick for details</div><div class="grid-wrap"><table class="grid"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table></div>`:`<div class="empty">Nobody has signed up yet — be the first on the "My Pick" tab.</div>`;document.querySelectorAll('#view-grid td.name-cell').forEach(c=>c.addEventListener('click',()=>openPlayerSheet(c.dataset.id)));document.querySelectorAll('#view-grid td.pick').forEach(c=>c.addEventListener('click',()=>openWeekSheet(Number(c.dataset.week))));document.querySelectorAll('#view-grid th.wk-head').forEach(t=>t.addEventListener('click',()=>openWeekSheet(Number(t.dataset.week))));positionGridForCurrentWeek();}function renderPlayers(){const sorted=[...ALL_PLAYERS].sort(comparePlayers);document.getElementById('playersList').innerHTML=sorted.map(p=>{const last=p.revealed.map((r,i)=>r&&p.picks[i]?i+1:null).filter(Boolean).pop(),sub=p.alive?(last?`Week ${last}: ${p.picks[last-1]}`:'No revealed picks yet'):`Out — Week ${p.eliminatedWeek}`;return `<div class="card ${p.alive?'alive':'dead'}" data-id="${p.id}" style="--tc:${teamColor(p.fanOf)}; --tc2:${teamSecondaryColor(p.fanOf)}"><div class="avatar${p.fanOf?'':' empty-fan'}"></div><div class="info"><div class="name">${p.name}</div><div class="sub">${sub}</div></div><div class="badge ${p.alive?'alive':'dead'}">${p.alive?'ALIVE':'OUT'}</div><div class="chev">›</div></div>`;}).join('')||`<div class="empty">No players yet.</div>`;document.querySelectorAll('#playersList .card').forEach(c=>c.addEventListener('click',()=>openPlayerSheet(c.dataset.id)));}
-function openPlayerSheet(id){const p=ALL_PLAYERS.find(x=>x.id===id);if(!p)return;const statRow=`<div class="stat-row"><div class="stat"><div class="v ${p.alive?'':'out-status'}">${p.alive?'ALIVE':'OUT'}</div><div class="l">Status</div></div><div class="stat"><div class="v">${p.nonConLeft}</div><div class="l">Non-Con Left</div></div><div class="stat"><div class="v">${p.g5Left}</div><div class="l">G5 Left</div></div></div>`,banner=p.alive?'':`<div class="out-banner">ELIMINATED — WEEK ${p.eliminatedWeek}</div>`,lastRow=!p.alive?p.eliminatedWeek:CURRENT_WEEK;let timeline='<div class="timeline">';for(let w=0;w<lastRow;w++){const pick=p.picks[w],revealed=p.revealed[w],result=p.results[w],game=pick?gameFor(w+1,pick):null,opp=pick?opponentOf(w+1,pick):null;let icon='';if(revealed&&pick)icon=result===1?`<div class="result-icon win">✓</div>`:result===0?`<div class="result-icon loss">✕</div>`:`<div class="result-icon pending">·</div>`;else if(!revealed&&w+1===CURRENT_WEEK)icon=`<div class="result-icon pending">?</div>`;const label=revealed?(pick?`${pick}${opp?` <span class="opp-context">${game&&game.away===pick?'@':'vs.'} ${opp}</span>`:''}`:'No pick'):'Hidden until Sat 11am',lost=revealed&&result===0;timeline+=`<div class="week-row"><div class="wk">W${w+1}</div><div class="team-chip">${revealed&&pick?`<div class="team-dot" style="--tc:${teamColor(pick)}; --tc2:${teamSecondaryColor(pick)}"></div>`:''}<div class="team-name ${!revealed||!pick?'empty':''} ${lost?'lost':''}">${label}</div></div>${icon}</div>`;}timeline+='</div>';document.getElementById('sheetContent').innerHTML=`<div class="sheet-head"><div class="name">${p.name}</div>${p.fanOf?`<div class="fan-chip" style="--tc:${teamColor(p.fanOf)}; --tc2:${teamSecondaryColor(p.fanOf)}">Fan of ${p.fanOf}</div>`:''}</div>${statRow}${banner}${timeline}`;showSheet();}
-function openWeekSheet(week){const weekGames=GAMES.filter(g=>g.week===week),deadline=weekDeadline(week),revealed=deadline?new Date()>=deadline:false,tally={};if(revealed)ALL_PLAYERS.forEach(p=>{const pick=p.picks[week-1];if(!pick)return;if(!tally[pick])tally[pick]={count:0,result:p.results[week-1]};tally[pick].count++;});const pickCount=t=>tally[t]?tally[t].count:0;let picksHTML='';if(revealed){const rows=Object.entries(tally).sort((a,b)=>b[1].count-a[1].count);picksHTML='<div class="week-section"><h3>Picks This Week</h3>';if(!rows.length)picksHTML+=`<div class="empty">No picks recorded for this week.</div>`;else rows.forEach(([team,info])=>{let cls='neutral';if(info.result===1)cls='win';else if(info.result===0)cls='loss';picksHTML+=`<div class="pickstat-row"><div class="team-dot" style="--tc:${teamColor(team)}; --tc2:${teamSecondaryColor(team)}"></div><div class="pickstat-name">${team}${opponentContextHTML(week,team)}</div><div class="pickstat-count">${info.count} pick${info.count===1?'':'s'}</div><div class="result-icon ${cls}">${cls==='win'?'✓':cls==='loss'?'✕':'·'}</div></div>`;});picksHTML+='</div>';}const conferenceSortName=g=>{const a=CONFERENCE_TEAMS.includes(g.away),h=CONFERENCE_TEAMS.includes(g.home);if(a&&h)return g.away<g.home?g.away:g.home;return a?g.away:g.home;};const gamesSorted=[...weekGames].sort((a,b)=>{const ai=gameIsIneligible(a)?1:0,bi=gameIsIneligible(b)?1:0;if(ai!==bi)return ai-bi;return revealed?Math.max(pickCount(b.away),pickCount(b.home))-Math.max(pickCount(a.away),pickCount(a.home)):conferenceSortName(a).localeCompare(conferenceSortName(b));});let gamesHTML='<div class="week-section"><h3>Scores</h3>';if(!gamesSorted.length)gamesHTML+=`<div class="empty">No schedule entered for this week yet.</div>`;else gamesSorted.forEach(g=>{const played=g.away_score!==null&&g.home_score!==null,awayWon=g.winner===g.away,homeWon=g.winner===g.home,awayPicked=revealed&&pickCount(g.away)>0,homePicked=revealed&&pickCount(g.home)>0,unpicked=revealed&&!awayPicked&&!homePicked,ineligibleGame=gameIsIneligible(g),teamClass=(win,picked)=>{const c=['game-team'];if(win)c.push('winner');if(picked&&g.winner)c.push(win?'pick-hit':'pick-miss');return c.join(' ');},sideMarkup=team=>{if(CONFERENCE_TEAMS.includes(team))return `<span class="game-team-name conference-chip" style="background:${teamColor(team)}; color:${teamSecondaryColor(team)}">${teamDisplay(team)}</span>`;return `<span class="game-team-name ${teamCategoryClass(team)}"${(team==='Arkansas-Pine Bluff'||team==='Youngstown State'||team==='Louisiana-Monroe'||team==='Western Kentucky')?' style="font-size:11px;"':''}>${team}</span>`;};gamesHTML+=`<div class="game-row ${unpicked?'unpicked':''} ${ineligibleGame?'ineligible-game':''}"><div class="${teamClass(awayWon,awayPicked)}">${sideMarkup(g.away)}${played?` <span class="game-score">${g.away_score}</span>`:''}</div><div class="game-at">@</div><div class="${teamClass(homeWon,homePicked)}">${sideMarkup(g.home)}${played?` <span class="game-score">${g.home_score}</span>`:''}</div><div class="game-pill-slot">${gamePillHTML(g)}</div></div>`;});gamesHTML+='</div>';document.getElementById('sheetContent').innerHTML=`<div class="sheet-head"><div class="name">Week ${week}</div></div>${picksHTML}${gamesHTML}`;showSheet();}
-function computeMyPickState(){const me=IDENTITY?ALL_PLAYERS.find(p=>p.id===IDENTITY.id):null;if(POOL_END_WEEK&&me)return me.alive?{state:'done',winner:true}:{state:'eliminated',eliminatedWeek:me.eliminatedWeek};const now=new Date(),picksByWeek={};MY_PICKS.forEach(m=>picksByWeek[m.week]=m);const weeks=[...new Set(GAMES.map(g=>g.week))].sort((a,b)=>a-b);for(let i=0;i<weeks.length;i++){const w=weeks[i],mine=picksByWeek[w];if(!mine){const deadline=weekDeadline(w);if(deadline&&now>=deadline)return{state:'eliminated',eliminatedWeek:w};const prev=weeks[i-1];if(prev!==undefined){const prevPick=picksByWeek[prev],prevResult=prevPick?resultFor(prev,prevPick.team):null;if(prevPick&&prevResult===0)return{state:'eliminated',eliminatedWeek:prev};if(!prevPick||prevResult===null)return{state:'pending',pendingWeek:prev};const reopen=weekReopenTime(prev);if(reopen&&now<reopen)return{state:'frozen',frozenWeek:prev,reopensAt:reopen};}return{state:'open',targetWeek:w};}const editableUntil=mine.editable_until?new Date(mine.editable_until):null;if(editableUntil&&editableUntil>now)return{state:'open',targetWeek:w};const result=resultFor(w,mine.team);if(result===0)return{state:'eliminated',eliminatedWeek:w};if(result===null)return{state:'pending',pendingWeek:w};const reopen=weekReopenTime(w);if(reopen&&now<reopen)return{state:'frozen',frozenWeek:w,reopensAt:reopen};}const last=weeks[weeks.length-1],next=(last||0)+1;if(next<=WEEKS&&GAMES.some(g=>g.week===next))return{state:'open',targetWeek:next};return{state:'done'};}function renderMyPick(){const el=document.getElementById('myPickPanel');if(PASSWORD_RECOVERY_ACTIVE){showPasswordResetPanel();return;}if(!IDENTITY){el.innerHTML=renderSignupForm();wireSignupForm();return;}const me=ALL_PLAYERS.find(p=>p.id===IDENTITY.id),status=computeMyPickState();if(status.state==='eliminated'){const pick=MY_PICKS.find(m=>m.week===status.eliminatedWeek);el.innerHTML=`<div class="panel"><div class="mypick-status eliminated">You're eliminated — Week ${status.eliminatedWeek}${pick?` (${pick.team})`:''}</div><p class="hint" style="text-align:center; margin-top:10px;"><span id="logoutLink" style="text-decoration:underline; cursor:pointer;">Log out</span></p></div>`;wireLogoutLink();return;}if(status.state==='done'){el.innerHTML=`<div class="panel"><div class="mypick-status waiting">Season complete — nice run!</div></div>`;return;}if(status.state==='pending'||status.state==='frozen'){const week=status.pendingWeek??status.frozenWeek,pick=MY_PICKS.find(m=>m.week===week),note=status.state==='pending'?`Enjoy the games!`:`Next week opens Sunday at 5:00am.`;el.innerHTML=`<div class="panel"><h3>Week ${week}</h3><p class="hint">Signed in as <strong>${me?me.name:'you'}</strong> &middot; <span id="logoutLink" style="text-decoration:underline; cursor:pointer;">Log out</span></p><div class="current-pick-banner" style="background:${pick?teamColor(pick.team):'var(--panel-2)'}; color:${pick?teamSecondaryColor(pick.team):'var(--text)'}; border-color:${pick?teamSecondaryColor(pick.team):'var(--hair)'};">Pick Locked: ${pick?teamDisplay(pick.team):'—'}</div><div class="mypick-status waiting">${note}</div></div>`;wireLogoutLink();return;}const targetWeek=status.targetWeek,usedTeams=new Set((me?me.picks:[]).filter(Boolean));let nonConLeft=3,g5Left=1;(me?me.picks:[]).forEach((pick,i)=>{if(i===targetWeek-1||!pick)return;const cat=classifyPick(i+1,pick);if(cat==='g5'||cat==='not_g5')nonConLeft--;if(cat==='g5')g5Left--;});el.innerHTML=`<div class="panel"><h3>Week ${targetWeek}</h3><p class="hint">Signed in as <strong>${me?me.name:'you'}</strong> &middot; <span id="logoutLink" style="text-decoration:underline; cursor:pointer;">Log out</span></p><div class="allowance-row"><div class="allowance"><div class="v">${nonConLeft}</div><div class="l">Non-Con Left</div></div><div class="allowance"><div class="v">${g5Left}</div><div class="l">G5 Left</div></div></div><div id="pickOptions"></div><div id="pickMsg"></div></div>`;wireLogoutLink();renderPickOptionsFor(targetWeek,usedTeams,nonConLeft,g5Left);}function renderPickOptionsFor(week,usedTeams,nonConLeft,g5Left){const container=document.getElementById('pickOptions'),existing=MY_PICKS.find(m=>m.week===week),now=new Date();if(existing){const until=existing.editable_until?new Date(existing.editable_until):null,locked=until&&until<=now;container.insertAdjacentHTML('afterbegin',`<div class="current-pick-banner ${locked?'locked':''}">Current Pick: ${teamDisplay(existing.team)}</div>`);}const weekGames=GAMES.filter(g=>g.week===week),options=[];weekGames.forEach(g=>[g.home,g.away].forEach(team=>{if(!CONFERENCE_TEAMS.includes(team))return;if(usedTeams.has(team)&&!(existing&&existing.team===team))return;const cat=classifyPick(week,team);if(cat==='ineligible'||cat==='invalid')return;if((cat==='g5'||cat==='not_g5')&&nonConLeft<=0&&!(existing&&existing.team===team))return;if(cat==='g5'&&g5Left<=0&&!(existing&&existing.team===team))return;const editableUntil=pickEditableUntil(week,team);if(editableUntil&&editableUntil<=now)return;options.push({team,opp:opponentOf(week,team),cat,editableUntil,isAway:g.away===team});}));options.sort((a,b)=>a.team.localeCompare(b.team));if(!options.length){container.insertAdjacentHTML('beforeend',`<div class="empty">No eligible, open picks remain for this week.</div>`);return;}container.insertAdjacentHTML('beforeend',options.map(o=>`<label class="pick-option ${existing&&existing.team===o.team?'selected':''}"><input type="radio" name="pickteam" value="${o.team}" ${existing&&existing.team===o.team?'checked':''}><div class="opt-name"><span class="game-team-name conference-chip" style="background:${teamColor(o.team)}; color:${teamSecondaryColor(o.team)}">${teamDisplay(o.team)}</span> <span class="opt-meta">${o.isAway?'at':'vs'} ${o.opp}</span></div>${o.cat==='g5'?'<span class="opt-tag g5">G5</span>':''}${o.cat==='not_g5'?'<span class="opt-tag nc">Non-Con</span>':''}</label>`).join('')+`<button class="btn" id="submitPickBtn" style="margin-top:8px;">Save Pick</button>`);document.getElementById('submitPickBtn').addEventListener('click',async()=>{const chosen=container.querySelector('input[name="pickteam"]:checked'),msg=document.getElementById('pickMsg');if(!chosen){msg.innerHTML=`<div class="msg error-msg">Pick a team first.</div>`;return;}try{const{error}=await sb.rpc('submit_pick',{p_week:week,p_team:chosen.value});if(error)throw error;msg.innerHTML=`<div class="msg ok-msg">Pick saved: ${chosen.value}.</div>`;await refreshAll();}catch(err){msg.innerHTML=`<div class="msg error-msg">${err.message||err}</div>`;}});}function renderSignupForm(){const deadline=weekDeadline(1),closed=deadline&&new Date()>=deadline;if(closed)return `<div class="panel"><h3>Signups are closed</h3><p class="hint">Week 1 has locked. If you're a returning player, log in below.</p>${loginFormHTML()}</div>`;const week1Games=GAMES.filter(g=>g.week===1),options=week1Games.filter(g=>CONFERENCE_TEAMS.includes(g.home)||CONFERENCE_TEAMS.includes(g.away)).flatMap(g=>[g.home,g.away].filter(t=>CONFERENCE_TEAMS.includes(t)).map(t=>({team:t,opp:opponentOf(1,t),isAway:g.away===t}))).filter(o=>{const c=classifyPick(1,o.team);return c!=='ineligible'&&c!=='invalid';});return `<div class="panel"><h3>Join the Pool</h3><p class="hint">Create your account and submit your Week 1 pick to get started.</p><div style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:var(--gold);color:var(--bg-2);font-size:13px;font-weight:800;text-align:center;">Please Venmo $25 to @Elliott-Pollack upon signing up</div><div class="field"><label>Your Name</label><input type="text" id="suName" placeholder="e.g. Luther Burden"></div><div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="trumanthetiger@gmail.com"></div><div class="field"><label>Password</label><input type="password" id="suPassword" placeholder="Choose a password"></div><div class="field"><label>Favorite SEC Team (optional)</label><select id="suFanOf" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--hair); border-radius:8px; color:var(--text); font-size:14.5px;"><option value="">No favorite</option>${CONFERENCE_TEAMS.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div><div class="field"><label>Week 1 Pick</label><select id="suTeam" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--hair); border-radius:8px; color:var(--text); font-size:14.5px;"><option value="">Choose a team…</option>${options.map(o=>`<option value="${o.team}">${o.team} (${o.isAway?'at':'vs'} ${o.opp})</option>`).join('')}</select></div><button class="btn" id="signupBtn">Sign Up & Submit Pick</button><div id="signupMsg"></div><div style="margin-top:18px; border-top:1px solid var(--hair); padding-top:14px;"><p class="hint">Already have an account?</p>${loginFormHTML()}</div></div>`;}function loginFormHTML(){return `<div class="field"><label>Email</label><input type="email" id="logEmail"></div><div class="field"><label>Password</label><input type="password" id="logPassword"></div><button class="btn secondary" id="loginBtn">Log In</button><p class="hint" style="margin-top:8px;"><span id="forgotLink" style="text-decoration:underline; cursor:pointer;">Forgot your password?</span></p><div id="loginMsg"></div><div id="forgotPanel" style="display:none; margin-top:10px; border-top:1px solid var(--hair); padding-top:10px;"><div class="field"><label>Email to send a reset link to</label><input type="email" id="forgotEmail"></div><button class="btn secondary" id="forgotBtn">Send Reset Link</button><div id="forgotMsg"></div></div>`;}function wireSignupForm(){const signupBtn=document.getElementById('signupBtn');if(signupBtn)signupBtn.addEventListener('click',async()=>{const name=document.getElementById('suName').value.trim(),email=document.getElementById('suEmail').value.trim(),password=document.getElementById('suPassword').value,fanOf=document.getElementById('suFanOf').value,team=document.getElementById('suTeam').value,msg=document.getElementById('signupMsg');if(!name||!email||!password||!team){msg.innerHTML=`<div class="msg error-msg">Name, email, password, and a Week 1 pick are all required.</div>`;return;}try{const{data,error}=await sb.auth.signUp({email,password,options:{data:{name,fan_of:fanOf||''}}});if(error)throw error;if(!data.session){msg.innerHTML=`<div class="msg error-msg">Account created, but no active session came back — check your Supabase project's email-confirmation setting.</div>`;return;}IDENTITY={id:data.user.id};try{const{error:pickErr}=await sb.rpc('submit_pick',{p_week:1,p_team:team});if(pickErr)throw pickErr;msg.innerHTML=`<div class="msg ok-msg">Welcome, ${name}! Your pick is in.</div>`;}catch(pickErr){msg.innerHTML=`<div class="msg error-msg">Account created, but your Week 1 pick couldn't be submitted: ${pickErr.message||pickErr}. You can try again from the My Pick tab.</div>`;}await refreshAll();}catch(err){msg.innerHTML=`<div class="msg error-msg">${err.message||err}</div>`;}});wireLoginForm();}function wireLoginForm(){const loginBtn=document.getElementById('loginBtn');if(loginBtn)loginBtn.addEventListener('click',async()=>{const email=document.getElementById('logEmail').value.trim(),password=document.getElementById('logPassword').value,msg=document.getElementById('loginMsg');try{const{error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;msg.innerHTML=`<div class="msg ok-msg">You're logged in.</div>`;await refreshAll();}catch(err){msg.innerHTML=`<div class="msg error-msg">${err.message||err}</div>`;}});const forgotLink=document.getElementById('forgotLink');if(forgotLink)forgotLink.addEventListener('click',()=>{document.getElementById('forgotPanel').style.display='block';forgotLink.style.display='none';});const forgotBtn=document.getElementById('forgotBtn');if(forgotBtn)forgotBtn.addEventListener('click',async()=>{const email=document.getElementById('forgotEmail').value.trim(),msg=document.getElementById('forgotMsg');try{const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;msg.innerHTML=`<div class="msg ok-msg">Check your email for a reset link.</div>`;}catch(err){msg.innerHTML=`<div class="msg error-msg">${err.message||err}</div>`;}});}function wireLogoutLink(){const link=document.getElementById('logoutLink');if(link)link.addEventListener('click',async()=>{await sb.auth.signOut();await refreshAll();});}function showPasswordResetPanel(){document.querySelector('.tab[data-tab="mypick"]').click();document.getElementById('myPickPanel').innerHTML=`<div class="panel"><h3>Set a New Password</h3><div class="field"><label>New Password</label><input type="password" id="newPassword"></div><button class="btn" id="setNewPasswordBtn">Save New Password</button><div id="resetMsg"></div></div>`;document.getElementById('setNewPasswordBtn').addEventListener('click',async()=>{const password=document.getElementById('newPassword').value,msg=document.getElementById('resetMsg');try{const{error}=await sb.auth.updateUser({password});if(error)throw error;PASSWORD_RECOVERY_ACTIVE=false;msg.innerHTML=`<div class="msg ok-msg">Password updated. You're logged in.</div>`;await refreshAll();}catch(err){msg.innerHTML=`<div class="msg error-msg">${err.message||err}</div>`;}});}function showSheet(){document.getElementById('sheetScroll').scrollTop=0;document.getElementById('overlay').classList.add('open');document.getElementById('sheet').classList.add('open');document.documentElement.classList.add('lock-scroll');document.body.classList.add('lock-scroll');}function closeSheet(){document.getElementById('overlay').classList.remove('open');document.getElementById('sheet').classList.remove('open');document.documentElement.classList.remove('lock-scroll');document.body.classList.remove('lock-scroll');}document.getElementById('overlay').addEventListener('click',closeSheet);document.getElementById('closeSheet').addEventListener('click',closeSheet);document.getElementById('commishLink').addEventListener('click',async()=>{const{data:{session}}=await sb.auth.getSession();if(session){const email=session.user.email?.toLowerCase();if(email===COMMISSIONER_EMAIL.toLowerCase())openAdminSheet();return;}const email=prompt('Commissioner email:');if(!email)return;const password=prompt('Password:');if(!password)return;const{data,error}=await sb.auth.signInWithPassword({email,password});if(error){alert('Sign-in failed: '+error.message);return;}if(data.user?.email?.toLowerCase()===COMMISSIONER_EMAIL.toLowerCase())openAdminSheet();});function commissionerVisibleWeek(){const now=new Date();let visible=1;for(let w=1;w<WEEKS;w++){const reopen=weekReopenTime(w);if(reopen&&now>=reopen)visible=w+1;else break;}return POOL_END_WEEK?Math.min(visible,POOL_END_WEEK):visible;}async function openAdminSheet(){const{data,error}=await sb.rpc('admin_get_all_picks');if(error){alert('Not authorized as commissioner: '+error.message);return;}const{data:emailRows,error:emailErr}=await sb.rpc('admin_get_missing_pick_email_list');const emailInfo=!emailErr&&emailRows&&emailRows[0]?emailRows[0]:null;const allTeams=CONFERENCE_TEAMS,visibleWeek=commissionerVisibleWeek(),rows=(data||[]).filter(r=>r.week<=visibleWeek),currentIds=new Set(rows.filter(r=>r.week===visibleWeek).map(r=>r.player_id));ALL_PLAYERS.filter(p=>p.alive&&!currentIds.has(p.id)).forEach(p=>rows.push({player_id:p.id,player_name:p.name,week:visibleWeek,team:null}));rows.sort((a,b)=>b.week-a.week||((a.team?1:0)-(b.team?1:0))||a.player_name.localeCompare(b.player_name,undefined,{sensitivity:'base'}));document.getElementById('sheetContent').innerHTML=`<div class="sheet-head"><div class="name">Commissioner</div></div><div class="week-section"><h3>All Picks</h3><div class="admin-email-tools"><button class="btn secondary" id="copyReminderEmailsBtn">Copy Reminder Emails</button></div><div class="admin-email-msg" id="adminEmailMsg"></div>${rows.map(r=>`<div class="admin-row"><div class="an">${r.player_name} — Wk ${r.week}</div><select data-pid="${r.player_id}" data-week="${r.week}" class="admin-team-select">${r.team?'':`<option value="" selected disabled>Pick not yet submitted</option>`}${allTeams.map(t=>`<option value="${t}" ${t===r.team?'selected':''}>${t}</option>`).join('')}</select>${r.team?`<button class="admin-del" data-pid="${r.player_id}" data-week="${r.week}">Delete</button>`:`<span class="admin-del-spacer" aria-hidden="true"></span>`}</div>`).join('')||'<div class="empty">No picks yet.</div>'}</div>`;showSheet();const copyEmailsBtn=document.getElementById('copyReminderEmailsBtn'),emailMsg=document.getElementById('adminEmailMsg'),fallbackCopy=text=>{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,ta.value.length);const ok=document.execCommand('copy');document.body.removeChild(ta);if(!ok)throw new Error('Clipboard unavailable');};if(copyEmailsBtn)copyEmailsBtn.addEventListener('click',()=>{const info=emailInfo||{week:visibleWeek,player_count:0,emails:''};if(emailErr){emailMsg.textContent='Could not load reminder emails: '+(emailErr.message||emailErr);return;}if(!info.emails){emailMsg.textContent=`Nobody alive owes a Week ${info.week} pick.`;return;}const copied=()=>{emailMsg.textContent=`Copied ${info.player_count} Week ${info.week} email${Number(info.player_count)===1?'':'s'} to clipboard.`;copyEmailsBtn.textContent=`Copied ${info.player_count} Emails`;setTimeout(()=>{copyEmailsBtn.textContent='Copy Reminder Emails';},1800);},failed=err=>{try{fallbackCopy(info.emails);copied();}catch(copyErr){emailMsg.textContent='Could not copy emails: '+(copyErr.message||err.message||err);}};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(info.emails).then(copied).catch(failed);else failed(new Error('Clipboard API unavailable'));});document.querySelectorAll('.admin-team-select').forEach(sel=>sel.addEventListener('change',async()=>{const{error}=await sb.rpc('admin_set_pick',{p_player_id:sel.dataset.pid,p_week:Number(sel.dataset.week),p_team:sel.value,p_note:'edited by commissioner'});if(error)alert(error.message);else{await refreshAll();openAdminSheet();}}));document.querySelectorAll('.admin-del').forEach(btn=>btn.addEventListener('click',async()=>{if(!confirm('Delete this pick?'))return;const{error}=await sb.rpc('admin_delete_pick',{p_player_id:btn.dataset.pid,p_week:Number(btn.dataset.week)});if(error)alert(error.message);else{await refreshAll();openAdminSheet();}}));}document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));tab.classList.add('active');document.getElementById('view-'+tab.dataset.tab).classList.add('active');}));async function refreshAll(){await loadAll();CURRENT_WEEK=computeCurrentWeek();ALL_PLAYERS=buildPlayers();if(POOL_END_WEEK)CURRENT_WEEK=POOL_END_WEEK;const aliveCount=ALL_PLAYERS.filter(p=>p.alive).length;document.getElementById('aliveCount').textContent=ALL_PLAYERS.length?aliveCount:'–';document.getElementById('totalCount').textContent='/ '+ALL_PLAYERS.length;renderGrid();renderPlayers();renderMyPick();}(async function init(){try{await refreshAll();document.getElementById('loadingMsg').style.display='none';}catch(err){console.error(err);document.getElementById('loadingMsg').style.display='none';const el=document.getElementById('errorMsg');el.style.display='block';el.textContent='Could not load the pool: '+(err.message||err);}})();
+const APP_CONFIG=window.SURVIVOR_APP_CONFIG||{};const SUPABASE_URL=APP_CONFIG.supabaseUrl||'';const SUPABASE_PUBLISHABLE_KEY=APP_CONFIG.supabasePublishableKey||'';const SEASON_YEAR=Number(APP_CONFIG.year)||2027,WEEKS=Number(APP_CONFIG.weeks)||10;if(!SUPABASE_URL||!SUPABASE_PUBLISHABLE_KEY)throw new Error('Season has not been initialized: app-config.js is missing the Supabase public configuration.');document.getElementById('seasonYearLabel').textContent=SEASON_YEAR||'—';document.title='SEC Survivor Basketball'+(SEASON_YEAR?' '+SEASON_YEAR:'');const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const CONFERENCE_TEAMS=['Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU','Mississippi State','Missouri','Oklahoma','Ole Miss','South Carolina','Tennessee','Texas','Texas A&M','Vanderbilt'];const TEAM_COLORS={'Alabama':'#9E1B32','Arkansas':'#9D2235','Auburn':'#0C2340','Florida':'#0021A5','Georgia':'#BA0C2F','Kentucky':'#0033A0','LSU':'#461D7C','Mississippi State':'#660000','Missouri':'#000000','Oklahoma':'#841617','Ole Miss':'#14213D','South Carolina':'#73000A','Tennessee':'#FF8200','Texas':'#BF5700','Texas A&M':'#500000','Vanderbilt':'#866D4B'};const TEAM_SECONDARY_COLORS={'Alabama':'#FFFFFF','Arkansas':'#FFFFFF','Auburn':'#E87722','Florida':'#FA4616','Georgia':'#000000','Kentucky':'#FFFFFF','LSU':'#FDD023','Mississippi State':'#FFFFFF','Missouri':'#F1B82D','Oklahoma':'#FDF9D8','Ole Miss':'#CE1126','South Carolina':'#000000','Tennessee':'#FFFFFF','Texas':'#FFFFFF','Texas A&M':'#FFFFFF','Vanderbilt':'#000000'};function teamColor(name){return TEAM_COLORS[name]||'#5d636e';}function teamSecondaryColor(name){return TEAM_SECONDARY_COLORS[name]||'#F5F7FB';}function colorLuminance(hex){const h=hex.replace('#',''),v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255).map(c=>c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4));return .2126*v[0]+.7152*v[1]+.0722*v[2];}function colorContrast(a,b){const x=colorLuminance(a),y=colorLuminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}function pendingPickStyle(name){const bg=teamColor(name),preferred=teamSecondaryColor(name),preferredContrast=colorContrast(preferred,bg),whiteContrast=colorContrast('#FFFFFF',bg),blackContrast=colorContrast('#000000',bg);let fg=preferred;if(name!=='Tennessee'&&name!=='Ole Miss'&&preferredContrast<3)fg=whiteContrast>=blackContrast?'#FFFFFF':'#000000';return `background:${bg};color:${fg};`;}const TEAM_ABBR={'Alabama':'ALA','Arkansas':'ARK','Auburn':'AUB','Florida':'UF','Georgia':'UGA','Kentucky':'UK','LSU':'LSU','Mississippi State':'MSU','Missouri':'MIZ','Oklahoma':'OU','Ole Miss':'MISS','South Carolina':'USC','Tennessee':'TENN','Texas':'TEX','Texas A&M':'A&M','Vanderbilt':'VU'};function teamAbbr(name){return TEAM_ABBR[name]||(name?name.slice(0,4).toUpperCase():'');}const TEAM_DISPLAY={'Mississippi State':'Miss. State','South Carolina':'S. Carolina'};function teamDisplay(name){return TEAM_DISPLAY[name]||name;}const COMMISSIONER_EMAIL='pollack.elliott@gmail.com';
+let IDENTITY=null,PASSWORD_RECOVERY_ACTIVE=false;
+let GAMES=[],WEEKS_DATA=[],PLAYERS_RAW=[],BOARD_ROWS=[],MY_PICKS=[],MY_PROFILE=null;
+let ALL_PLAYERS=[],CURRENT_WEEK=1,POOL_END_WEEK=null,POOL_WINNER_ID=null,ADMIN_CACHE=null;
+
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];});}
+function weekInfo(w){return WEEKS_DATA.find(function(x){return x.week===w;})||null;}
+function weekOpenTime(w){const x=weekInfo(w);return x&&x.opens_at?new Date(x.opens_at):null;}
+function weekDeadline(w){const x=weekInfo(w);return x&&x.locks_at?new Date(x.locks_at):null;}
+function weekGames(w){return GAMES.filter(function(g){return g.week===w;});}
+function gamesForTeam(w,team){return weekGames(w).filter(function(g){return g.home===team||g.away===team;});}
+function teamIsEligibleLocal(w,team){const gs=gamesForTeam(w,team);if(w===1)return gs.length===1&&gs[0].slot==='saturday';return gs.length===2&&gs.some(function(g){return g.slot==='midweek';})&&gs.some(function(g){return g.slot==='saturday';});}
+function gameOpponent(g,team){return g.home===team?g.away:g.home;}
+function teamScheduleText(w,team){
+  const gs=gamesForTeam(w,team).slice().sort(function(a,b){return a.slot==='midweek'?-1:b.slot==='midweek'?1:0;});
+  return gs.map(function(g){return (g.away===team?'at ':'vs. ')+teamDisplay(gameOpponent(g,team));}).join(' · ');
+}
+function weekComplete(w){const gs=weekGames(w);return gs.length>0&&gs.every(function(g){return !!g.is_final;});}
+function formatCentral(iso){
+  if(!iso)return '—';
+  return new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(iso))+' CT';
+}
+function toLocalInput(iso){
+  if(!iso)return '';
+  const d=new Date(iso),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);
+  const o={};parts.forEach(function(p){o[p.type]=p.value;});
+  return o.year+'-'+o.month+'-'+o.day+'T'+o.hour+':'+o.minute;
+}
+function chicagoInputToISO(v){
+  if(!v)return null;
+  const parts=v.split('T'),d=parts[0].split('-').map(Number),t=parts[1].split(':').map(Number);
+  const probe=new Date(Date.UTC(d[0],d[1]-1,d[2],t[0]+6,t[1]));
+  const central=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',timeZoneName:'shortOffset',hour:'2-digit'}).formatToParts(probe).find(function(p){return p.type==='timeZoneName';}).value;
+  const m=central.match(/GMT([+-])(\d+)(?::(\d+))?/),sign=m&&m[1]==='-'?-1:1,off=m?sign*(Number(m[2])*60+Number(m[3]||0)):-360;
+  return new Date(Date.UTC(d[0],d[1]-1,d[2],t[0],t[1])-off*60000).toISOString();
+}
+function statusLabel(s){
+  return ({pending:'Pending',warning:'0–1',safe:'2–0',strike:'1–1',eliminated:'0–2',hidden:'Hidden',invalid:'Ineligible'})[s]||s||'Pending';
+}
+function statusIcon(s){
+  if(s==='safe')return '<span class="result-icon win">✓</span>';
+  if(s==='strike'||s==='warning')return '<span class="result-icon strike">!</span>';
+  if(s==='eliminated')return '<span class="result-icon loss">✕</span>';
+  return '<span class="result-icon pending">·</span>';
+}
+function pickCellClass(status,isOut){
+  if(status==='safe')return 'win';
+  if(status==='strike'||status==='warning')return 'strike'+(isOut?' out':'');
+  if(status==='eliminated')return 'loss';
+  return 'neutral';
+}
+function pickStyle(status,team){
+  return status==='pending'&&team?pendingPickStyle(team):'';
+}
+function playerNameParts(name){
+  const parts=(name||'').trim().split(/\s+/).filter(Boolean),suffixes=new Set(['jr','jr.','sr','sr.','ii','iii','iv','v']);
+  if(!parts.length)return{last:'',first:'',suffix:''};
+  let li=parts.length-1;if(li>0&&suffixes.has(parts[li].toLowerCase()))li--;
+  return{last:parts[li]||'',first:parts.slice(0,li).join(' '),suffix:parts.slice(li+1).join(' ')};
+}
+function comparePlayerNames(aName,bName){
+  const a=playerNameParts(aName),b=playerNameParts(bName);
+  return a.last.localeCompare(b.last,undefined,{sensitivity:'base'})||a.first.localeCompare(b.first,undefined,{sensitivity:'base'})||a.suffix.localeCompare(b.suffix,undefined,{sensitivity:'base'})||(aName||'').localeCompare(bName||'',undefined,{sensitivity:'base'});
+}
+function comparePlayers(a,b){
+  if(a.alive!==b.alive)return a.alive?-1:1;
+  if(!a.alive&&!b.alive){const d=(b.eliminatedWeek||0)-(a.eliminatedWeek||0);if(d)return d;}
+  return comparePlayerNames(a.name,b.name);
+}
+
+async function loadAll(){
+  const sessionResult=await sb.auth.getSession();
+  const session=sessionResult.data.session;
+  IDENTITY=session?{id:session.user.id,email:session.user.email}:null;
+  const results=await Promise.all([
+    sb.from('games').select('*').order('week').order('scheduled_date').order('slot'),
+    sb.from('weeks').select('*').order('week'),
+    sb.rpc('get_public_players'),
+    sb.rpc('get_public_board'),
+    sb.rpc('pool_end_week')
+  ]);
+  for(let i=0;i<4;i++)if(results[i].error)throw results[i].error;
+  GAMES=results[0].data||[];
+  WEEKS_DATA=results[1].data||[];
+  PLAYERS_RAW=results[2].data||[];
+  BOARD_ROWS=results[3].data||[];
+  POOL_END_WEEK=results[4].error?null:results[4].data;
+  MY_PICKS=[];MY_PROFILE=null;
+  if(IDENTITY){
+    const mine=await Promise.all([sb.rpc('get_my_picks'),sb.rpc('get_my_profile')]);
+    if(!mine[0].error)MY_PICKS=mine[0].data||[];
+    if(!mine[1].error&&mine[1].data&&mine[1].data.length)MY_PROFILE=mine[1].data[0];
+  }
+}
+
+function buildPlayers(){
+  const players=PLAYERS_RAW.map(function(p){
+    const rows=BOARD_ROWS.filter(function(r){return r.player_id===p.player_id;});
+    const isMe=!!(IDENTITY&&IDENTITY.id===p.player_id),picks=[],statuses=[],revealed=[];
+    for(let w=1;w<=WEEKS;w++){
+      const publicRow=rows.find(function(r){return r.week===w;});
+      const mine=isMe?MY_PICKS.find(function(r){return r.week===w;}):null;
+      picks.push(mine?mine.team:(publicRow?publicRow.team:null));
+      statuses.push(mine?mine.weekly_status:(publicRow?publicRow.weekly_status:null));
+      revealed.push(isMe||!!(publicRow&&publicRow.revealed));
+    }
+    return{
+      id:p.player_id,name:p.player_name,fanOf:p.fan_of||'',strikes:Number(p.strikes||0),
+      eliminatedWeek:p.eliminated_week==null?null:Number(p.eliminated_week),
+      alive:!!p.alive,isMe:isMe,picks:picks,statuses:statuses,revealed:revealed
+    };
+  });
+  const alive=players.filter(function(p){return p.alive;});
+  POOL_WINNER_ID=POOL_END_WEEK&&alive.length===1?alive[0].id:null;
+  return players;
+}
+
+function computeCurrentWeek(){
+  if(POOL_END_WEEK)return Number(POOL_END_WEEK);
+  const now=new Date();
+  let current=1;
+  for(let w=1;w<=WEEKS;w++){
+    const info=weekInfo(w);
+    if(!info)continue;
+    const open=weekOpenTime(w),sat=new Date(String(info.saturday_date)+'T23:59:59');
+    if(open&&now>=open)current=w;
+    else if(w===1&&now<=sat)current=1;
+  }
+  return current;
+}
+
+function renderGrid(){
+  const ordered=ALL_PLAYERS.slice().sort(comparePlayers);
+  let head='<th class="corner">Player</th>';
+  for(let w=1;w<=WEEKS;w++)head+='<th class="wk-head" data-week="'+w+'">Wk '+w+'</th>';
+  const rows=ordered.map(function(p){
+    let cells='';
+    for(let w=1;w<=WEEKS;w++){
+      const afterElim=p.eliminatedWeek&&w>p.eliminatedWeek;
+      if(afterElim){cells+='<td class="pick dead-week" data-week="'+w+'">—</td>';continue;}
+      const pick=p.picks[w-1],status=p.statuses[w-1],revealed=p.revealed[w-1],deadline=weekDeadline(w),pastLock=deadline&&new Date()>=deadline;
+      if(!revealed&&!p.isMe){
+        cells+='<td class="pick hidden-pick" data-week="'+w+'" title="Hidden until weekly lock">•</td>';continue;
+      }
+      if(!pick){
+        if(p.eliminatedWeek===w&&pastLock)cells+='<td class="pick loss" data-week="'+w+'">No Pick</td>';
+        else cells+='<td class="pick empty" data-week="'+w+'">—</td>';
+        continue;
+      }
+      const outHere=p.eliminatedWeek===w;
+      cells+='<td class="pick '+pickCellClass(status,outHere)+'" data-week="'+w+'" style="'+pickStyle(status,pick)+'" title="'+esc(teamScheduleText(w,pick))+'">'+esc(teamAbbr(pick))+'</td>';
+    }
+    const fanStyle=p.fanOf?'--tc:'+teamColor(p.fanOf)+';--tc2:'+teamSecondaryColor(p.fanOf):'';
+    return '<tr class="'+(p.alive?'':'dead')+'" data-player="'+p.id+'"><td class="name-cell" data-player="'+p.id+'"><span class="team-dot '+(p.fanOf?'':'empty-fan')+'" style="'+fanStyle+'"></span><span class="name-text">'+esc(p.name)+'</span></td>'+cells+'</tr>';
+  }).join('');
+  document.getElementById('view-grid').innerHTML='<div class="grid-hint">Tap a player or week for details</div><div class="grid-wrap"><table class="grid"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  document.querySelectorAll('#view-grid .name-cell').forEach(function(el){el.addEventListener('click',function(){openPlayer(el.dataset.player);});});
+  document.querySelectorAll('#view-grid th.wk-head').forEach(function(el){el.addEventListener('click',function(){openWeek(Number(el.dataset.week));});});
+  document.querySelectorAll('#view-grid td.pick').forEach(function(el){el.addEventListener('click',function(){openWeek(Number(el.dataset.week));});});
+}
+
+function renderPlayers(){
+  const ordered=ALL_PLAYERS.slice().sort(comparePlayers);
+  document.getElementById('playersList').innerHTML=ordered.length?ordered.map(function(p){
+    const fanStyle=p.fanOf?'--tc:'+teamColor(p.fanOf)+';--tc2:'+teamSecondaryColor(p.fanOf):'';
+    const sub=p.alive?('<span class="strike-count">'+p.strikes+' strike'+(p.strikes===1?'':'s')+'</span> · Alive'):('Eliminated Week '+p.eliminatedWeek+' · '+p.strikes+' strike'+(p.strikes===1?'':'s'));
+    return '<div class="card '+(p.alive?'alive':'dead')+'" data-player="'+p.id+'"><div class="avatar '+(p.fanOf?'':'empty-fan')+'" style="'+fanStyle+'"></div><div class="info"><div class="name">'+esc(p.name)+'</div><div class="sub">'+sub+'</div></div><div class="badge '+(p.alive?'alive':'dead')+'">'+(p.alive?'ALIVE':'OUT')+'</div><div class="chev">›</div></div>';
+  }).join(''):'<div class="panel"><p class="hint">No players have joined yet.</p></div>';
+  document.querySelectorAll('#playersList .card').forEach(function(el){el.addEventListener('click',function(){openPlayer(el.dataset.player);});});
+}
+
+function openPlayer(id){
+  const p=ALL_PLAYERS.find(function(x){return x.id===id;});if(!p)return;
+  let timeline='';
+  for(let w=1;w<=WEEKS;w++){
+    if(p.eliminatedWeek&&w>p.eliminatedWeek)break;
+    const pick=p.picks[w-1],status=p.statuses[w-1],revealed=p.revealed[w-1];
+    let name='<span class="team-name empty">'+(revealed?'No pick':'Hidden')+'</span>',icon='<span class="result-icon pending">·</span>';
+    if(pick){
+      const lost=(status==='eliminated'||((status==='strike'||status==='warning')&&p.eliminatedWeek===w));
+      name='<span class="team-name '+(lost?'lost':'')+'">'+esc(teamDisplay(pick))+' <span class="opp-context">'+esc(teamScheduleText(w,pick))+'</span></span>';
+      icon=statusIcon(status);
+    }else if(p.eliminatedWeek===w)icon='<span class="result-icon loss">✕</span>';
+    timeline+='<div class="week-row"><div class="wk">W'+w+'</div><div class="team-chip">'+name+'</div>'+icon+'</div>';
+  }
+  const fan=p.fanOf?'<div class="fan-chip" style="--tc:'+teamColor(p.fanOf)+';--tc2:'+teamSecondaryColor(p.fanOf)+'">'+esc(p.fanOf)+'</div>':'';
+  const banner=p.alive?'<div class="alive-banner">Still standing · '+p.strikes+' strike'+(p.strikes===1?'':'s')+'</div>':'<div class="out-banner">Eliminated in Week '+p.eliminatedWeek+' · '+p.strikes+' completed strike'+(p.strikes===1?'':'s')+'</div>';
+  document.getElementById('sheetContent').innerHTML='<div class="sheet-head"><div class="name">'+esc(p.name)+'</div>'+fan+'</div>'+banner+'<div class="stat-row"><div class="stat"><div class="v">'+p.strikes+'</div><div class="l">Strikes</div></div><div class="stat"><div class="v '+(p.alive?'':'out-status')+'">'+(p.alive?'ALIVE':'OUT')+'</div><div class="l">Status</div></div></div><div class="timeline">'+timeline+'</div>';
+  showSheet();
+}
+
+function gameLine(g){
+  const played=!!g.is_final,awayWon=played&&g.winner===g.away,homeWon=played&&g.winner===g.home;
+  function side(team,won,score){return '<div class="game-team '+(won?'winner':'')+'"><span class="game-team-name conference-chip" style="background:'+teamColor(team)+';color:'+teamSecondaryColor(team)+'">'+esc(teamDisplay(team))+'</span>'+(played?' <span class="game-score">'+score+'</span>':'')+'</div>';}
+  return '<div class="game-row">'+side(g.away,awayWon,g.away_score)+'<div class="game-at">@</div>'+side(g.home,homeWon,g.home_score)+'</div>';
+}
+function openWeek(week){
+  const info=weekInfo(week),rows=BOARD_ROWS.filter(function(r){return r.week===week&&r.revealed&&r.team;});
+  const counts={};rows.forEach(function(r){counts[r.team]=(counts[r.team]||0)+1;});
+  let picks='<div class="week-section"><h3>Selections</h3>';
+  if(!rows.length)picks+='<div class="empty">'+((weekDeadline(week)&&new Date()<weekDeadline(week))?'Picks are hidden until lock.':'No selections to display.')+'</div>';
+  else Object.keys(counts).sort().forEach(function(team){picks+='<div class="pickstat-row"><span class="team-dot" style="--tc:'+teamColor(team)+';--tc2:'+teamSecondaryColor(team)+'"></span><div class="pickstat-name">'+esc(teamDisplay(team))+' <span class="opponent-context">'+esc(teamScheduleText(week,team))+'</span></div><div class="pickstat-count">'+counts[team]+'</div></div>';});
+  picks+='</div>';
+  let games='';
+  ['midweek','saturday'].forEach(function(slot){
+    const gs=weekGames(week).filter(function(g){return g.slot===slot;});
+    if(!gs.length)return;
+    games+='<div class="week-section"><div class="slot-label">'+(slot==='midweek'?'Midweek':'Saturday')+'</div>'+gs.map(gameLine).join('')+'</div>';
+  });
+  const note=info&&info.lock_note?'<div class="current-pick-banner" style="margin:12px 20px 0">'+esc(info.lock_note)+'</div>':'';
+  document.getElementById('sheetContent').innerHTML='<div class="sheet-head"><div class="name">Week '+week+'</div><div class="hint">Locks '+formatCentral(info&&info.locks_at)+'</div></div>'+note+picks+games;
+  showSheet();
+}
+
+function eligibleOptions(week,used,existing){
+  return CONFERENCE_TEAMS.filter(function(team){
+    if(!teamIsEligibleLocal(week,team))return false;
+    if(used.has(team)&&team!==existing)return false;
+    return true;
+  }).sort();
+}
+
+function computeMyPickState(){
+  if(!IDENTITY)return{state:'signedout'};
+  if(MY_PROFILE&&MY_PROFILE.eliminated_week!=null)return{state:'eliminated',eliminatedWeek:Number(MY_PROFILE.eliminated_week)};
+  if(POOL_END_WEEK)return{state:'done',winner:POOL_WINNER_ID===IDENTITY.id};
+  const now=new Date();
+  for(let w=1;w<=WEEKS;w++){
+    const info=weekInfo(w);if(!info)continue;
+    const mine=MY_PICKS.find(function(p){return p.week===w;}),open=weekOpenTime(w),lock=weekDeadline(w);
+    if(mine){
+      if(lock&&now<lock)return open&&now>=open?{state:'open',targetWeek:w}:{state:'waiting',targetWeek:w,opensAt:open};
+      if(mine.weekly_status==='pending'||mine.weekly_status==='warning')return{state:'pending',pendingWeek:w};
+      continue;
+    }
+    if(lock&&now>=lock){
+      if(w===1)return{state:'closed-not-entered'};
+      return{state:'eliminated',eliminatedWeek:w};
+    }
+    if(open&&now>=open)return{state:'open',targetWeek:w};
+    return{state:'waiting',targetWeek:w,opensAt:open};
+  }
+  return{state:'done',winner:false};
+}
+
+function renderMyPick(){
+  const el=document.getElementById('myPickPanel');
+  if(PASSWORD_RECOVERY_ACTIVE){showPasswordResetPanel();return;}
+  if(!IDENTITY){el.innerHTML=renderSignupForm();wireSignupForm();return;}
+  const state=computeMyPickState(),me=ALL_PLAYERS.find(function(p){return p.id===IDENTITY.id;});
+  const who=me?me.name:'you';
+  if(state.state==='closed-not-entered'){el.innerHTML='<div class="panel"><div class="mypick-status eliminated">Week 1 has locked and this account did not enter the pool.</div>'+logoutHTML()+'</div>';wireLogoutLink();return;}
+  if(state.state==='eliminated'){el.innerHTML='<div class="panel"><div class="mypick-status eliminated">You are eliminated — Week '+state.eliminatedWeek+'</div>'+logoutHTML()+'</div>';wireLogoutLink();return;}
+  if(state.state==='done'){
+    const text=state.winner?'Season complete — you won the pool!':'Season complete.';
+    el.innerHTML='<div class="panel"><div class="mypick-status waiting">'+text+'</div>'+logoutHTML()+'</div>';wireLogoutLink();return;
+  }
+  if(state.state==='pending'){
+    const pick=MY_PICKS.find(function(p){return p.week===state.pendingWeek;});
+    el.innerHTML='<div class="panel"><h3>Week '+state.pendingWeek+'</h3><p class="hint">Signed in as <strong>'+esc(who)+'</strong></p><div class="current-pick-banner" style="'+(pick?pendingPickStyle(pick.team):'')+'">Pick Locked: '+esc(pick?teamDisplay(pick.team):'—')+'</div><div class="mypick-status waiting">Enjoy the games! Current weekly status: '+esc(statusLabel(pick&&pick.weekly_status))+'.</div>'+logoutHTML()+'</div>';wireLogoutLink();return;
+  }
+  if(state.state==='waiting'){
+    const msg=state.targetWeek===1&&state.opensAt==null?'Week 1 signups are not open yet.':('Week '+state.targetWeek+' opens '+formatCentral(state.opensAt)+'.');
+    el.innerHTML='<div class="panel"><h3>Week '+state.targetWeek+'</h3><div class="mypick-status waiting">'+msg+'</div>'+logoutHTML()+'</div>';wireLogoutLink();return;
+  }
+  const week=state.targetWeek,existing=MY_PICKS.find(function(p){return p.week===week;}),used=new Set(MY_PICKS.filter(function(p){return p.week!==week;}).map(function(p){return p.team;})),options=eligibleOptions(week,used,existing&&existing.team);
+  el.innerHTML='<div class="panel"><h3>Week '+week+'</h3><p class="hint">Signed in as <strong>'+esc(who)+'</strong> · '+(me?me.strikes:0)+' strike'+((me&&me.strikes===1)?'':'s')+'</p><div id="pickOptions"></div><div id="pickMsg"></div>'+logoutHTML()+'</div>';
+  wireLogoutLink();renderPickOptionsFor(week,options,existing);
+}
+function logoutHTML(){return '<p class="hint" style="text-align:center;margin-top:12px"><span id="logoutLink" style="text-decoration:underline;cursor:pointer">Log out</span></p>';}
+function renderPickOptionsFor(week,options,existing){
+  const container=document.getElementById('pickOptions');
+  if(existing)container.innerHTML+='<div class="current-pick-banner">Current Pick: '+esc(teamDisplay(existing.team))+'</div>';
+  if(!options.length){container.innerHTML+='<div class="empty">No eligible unused teams remain for this week.</div>';return;}
+  container.innerHTML+=options.map(function(team){
+    return '<label class="pick-option '+(existing&&existing.team===team?'selected':'')+'"><input type="radio" name="pickteam" value="'+esc(team)+'" '+(existing&&existing.team===team?'checked':'')+'><div class="opt-name"><span class="game-team-name conference-chip" style="background:'+teamColor(team)+';color:'+teamSecondaryColor(team)+'">'+esc(teamDisplay(team))+'</span> <span class="opt-meta">'+esc(teamScheduleText(week,team))+'</span></div></label>';
+  }).join('')+'<button class="btn" id="submitPickBtn" style="margin-top:8px">Save Pick</button>';
+  document.getElementById('submitPickBtn').addEventListener('click',async function(){
+    const chosen=container.querySelector('input[name="pickteam"]:checked'),msg=document.getElementById('pickMsg');
+    if(!chosen){msg.innerHTML='<div class="msg error-msg">Pick a team first.</div>';return;}
+    try{const r=await sb.rpc('submit_pick',{p_week:week,p_team:chosen.value});if(r.error)throw r.error;msg.innerHTML='<div class="msg ok-msg">Pick saved: '+esc(chosen.value)+'.</div>';await refreshAll();}
+    catch(err){msg.innerHTML='<div class="msg error-msg">'+esc(err.message||err)+'</div>';}
+  });
+}
+
+function renderSignupForm(){
+  const info=weekInfo(1),now=new Date(),open=weekOpenTime(1),lock=weekDeadline(1);
+  const canJoin=!!(open&&lock&&now>=open&&now<lock);
+  if(!canJoin){
+    const why=lock&&now>=lock?'Week 1 has locked. Signups are closed.':'Week 1 signups are not open yet.';
+    return '<div class="panel"><h3>'+why+'</h3><p class="hint">Returning player?</p>'+loginFormHTML()+'</div>';
+  }
+  const opts=CONFERENCE_TEAMS.filter(function(t){return teamIsEligibleLocal(1,t);}).sort();
+  return '<div class="panel"><h3>Join the Pool</h3><p class="hint">Create your account and submit your Week 1 pick.</p><div style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:var(--gold);color:var(--bg-2);font-size:13px;font-weight:800;text-align:center">Please Venmo $25 to @Elliott-Pollack upon signing up</div><div class="field"><label>Your Name</label><input type="text" id="suName"></div><div class="field"><label>Email</label><input type="email" id="suEmail"></div><div class="field"><label>Password</label><input type="password" id="suPassword"></div><div class="field"><label>Favorite SEC Team (optional)</label><select id="suFanOf"><option value="">No favorite</option>'+CONFERENCE_TEAMS.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>';}).join('')+'</select></div><div class="field"><label>Week 1 Pick</label><select id="suTeam"><option value="">Choose a team…</option>'+opts.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+' ('+esc(teamScheduleText(1,t))+')</option>';}).join('')+'</select></div><button class="btn" id="signupBtn">Sign Up & Submit Pick</button><div id="signupMsg"></div><div style="margin-top:18px;border-top:1px solid var(--hair);padding-top:14px"><p class="hint">Already have an account?</p>'+loginFormHTML()+'</div></div>';
+}
+function loginFormHTML(){
+  return '<div class="field"><label>Email</label><input type="email" id="logEmail"></div><div class="field"><label>Password</label><input type="password" id="logPassword"></div><button class="btn secondary" id="loginBtn">Log In</button><p class="hint" style="margin-top:8px"><span id="forgotLink" style="text-decoration:underline;cursor:pointer">Forgot your password?</span></p><div id="loginMsg"></div><div id="forgotPanel" style="display:none;margin-top:10px;border-top:1px solid var(--hair);padding-top:10px"><div class="field"><label>Email to send a reset link to</label><input type="email" id="forgotEmail"></div><button class="btn secondary" id="forgotBtn">Send Reset Link</button><div id="forgotMsg"></div></div>';
+}
+function wireSignupForm(){
+  const btn=document.getElementById('signupBtn');
+  if(btn)btn.addEventListener('click',async function(){
+    const name=document.getElementById('suName').value.trim(),email=document.getElementById('suEmail').value.trim(),password=document.getElementById('suPassword').value,fan=document.getElementById('suFanOf').value,team=document.getElementById('suTeam').value,msg=document.getElementById('signupMsg');
+    if(!name||!email||!password||!team){msg.innerHTML='<div class="msg error-msg">Name, email, password, and a Week 1 pick are required.</div>';return;}
+    try{
+      const r=await sb.auth.signUp({email:email,password:password,options:{data:{name:name,fan_of:fan||''}}});if(r.error)throw r.error;
+      if(!r.data.session){msg.innerHTML='<div class="msg error-msg">Account created, but email confirmation is still enabled. The commissioner needs to disable email confirmation before signups open.</div>';return;}
+      IDENTITY={id:r.data.user.id,email:email};
+      const p=await sb.rpc('submit_pick',{p_week:1,p_team:team});if(p.error)throw p.error;
+      msg.innerHTML='<div class="msg ok-msg">Welcome, '+esc(name)+'! Your Week 1 pick is in.</div>';await refreshAll();
+    }catch(err){msg.innerHTML='<div class="msg error-msg">'+esc(err.message||err)+'</div>';}
+  });
+  wireLoginForm();
+}
+function wireLoginForm(){
+  const b=document.getElementById('loginBtn');if(b)b.addEventListener('click',async function(){const email=document.getElementById('logEmail').value.trim(),password=document.getElementById('logPassword').value,msg=document.getElementById('loginMsg');try{const r=await sb.auth.signInWithPassword({email:email,password:password});if(r.error)throw r.error;msg.innerHTML='<div class="msg ok-msg">You are logged in.</div>';await refreshAll();}catch(err){msg.innerHTML='<div class="msg error-msg">'+esc(err.message||err)+'</div>';}});
+  const link=document.getElementById('forgotLink');if(link)link.addEventListener('click',function(){document.getElementById('forgotPanel').style.display='block';link.style.display='none';});
+  const fb=document.getElementById('forgotBtn');if(fb)fb.addEventListener('click',async function(){const email=document.getElementById('forgotEmail').value.trim(),msg=document.getElementById('forgotMsg');try{const r=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(r.error)throw r.error;msg.innerHTML='<div class="msg ok-msg">Check your email for a reset link.</div>';}catch(err){msg.innerHTML='<div class="msg error-msg">'+esc(err.message||err)+'</div>';}});
+}
+function wireLogoutLink(){const l=document.getElementById('logoutLink');if(l)l.addEventListener('click',async function(){await sb.auth.signOut();await refreshAll();});}
+function showPasswordResetPanel(){
+  document.querySelector('.tab[data-tab="mypick"]').click();
+  document.getElementById('myPickPanel').innerHTML='<div class="panel"><h3>Set a New Password</h3><div class="field"><label>New Password</label><input type="password" id="newPassword"></div><button class="btn" id="setNewPasswordBtn">Save New Password</button><div id="resetMsg"></div></div>';
+  document.getElementById('setNewPasswordBtn').addEventListener('click',async function(){const password=document.getElementById('newPassword').value,msg=document.getElementById('resetMsg');try{const r=await sb.auth.updateUser({password:password});if(r.error)throw r.error;PASSWORD_RECOVERY_ACTIVE=false;msg.innerHTML='<div class="msg ok-msg">Password updated.</div>';await refreshAll();}catch(err){msg.innerHTML='<div class="msg error-msg">'+esc(err.message||err)+'</div>';}});
+}
+
+function showSheet(){document.getElementById('sheetScroll').scrollTop=0;document.getElementById('overlay').classList.add('open');document.getElementById('sheet').classList.add('open');document.documentElement.classList.add('lock-scroll');}
+function closeSheet(){document.getElementById('overlay').classList.remove('open');document.getElementById('sheet').classList.remove('open');document.documentElement.classList.remove('lock-scroll');}
+document.getElementById('closeSheet').addEventListener('click',closeSheet);
+document.getElementById('overlay').addEventListener('click',closeSheet);
+
+async function openAdminSheet(){
+  if(!IDENTITY){
+    document.querySelector('.tab[data-tab="mypick"]').click();
+    closeSheet();return;
+  }
+  const r=await sb.rpc('admin_get_all_picks');
+  if(r.error){alert('This signed-in account is not a commissioner.');return;}
+  ADMIN_CACHE=r.data||[];
+  let week=CURRENT_WEEK;
+  renderAdminWeek(week);
+}
+function renderAdminWeek(week){
+  const info=weekInfo(week),picks=(ADMIN_CACHE||[]).filter(function(p){return p.week===week;});
+  const options=CONFERENCE_TEAMS.filter(function(t){return teamIsEligibleLocal(week,t);}).sort();
+  let rows='';
+  ALL_PLAYERS.forEach(function(p){
+    const pk=picks.find(function(x){return x.player_id===p.id;});
+    rows+='<div class="admin-row"><div class="an">'+esc(p.name)+'</div><select class="admin-pick" data-pid="'+p.id+'" data-week="'+week+'"><option value="">—</option>'+options.map(function(t){return '<option value="'+esc(t)+'" '+(pk&&pk.team===t?'selected':'')+'>'+esc(teamDisplay(t))+'</option>';}).join('')+'</select>'+(pk?'<button class="admin-del" data-pid="'+p.id+'" data-week="'+week+'">Delete</button>':'<span class="admin-del-spacer"></span>')+'</div>';
+  });
+  document.getElementById('sheetContent').innerHTML='<div class="sheet-head"><div class="name">Commissioner</div></div><div class="week-section"><h3>Week Controls</h3><div class="admin-window-grid"><select id="adminWeek">'+Array.from({length:WEEKS},function(_,i){return '<option value="'+(i+1)+'" '+(i+1===week?'selected':'')+'>Week '+(i+1)+'</option>';}).join('')+'</select><label class="hint">Opens (Central)<input type="datetime-local" id="adminOpen" value="'+toLocalInput(info&&info.opens_at)+'"></label><label class="hint">Locks (Central)<input type="datetime-local" id="adminLock" value="'+toLocalInput(info&&info.locks_at)+'"></label><input type="text" id="adminNote" placeholder="Optional lock note" value="'+esc(info&&info.lock_note||'')+'"><button class="btn" id="saveWeekWindow">Save Week Window</button></div><h3>Player Picks</h3>'+rows+'</div>';
+  showSheet();
+  document.getElementById('adminWeek').addEventListener('change',function(){renderAdminWeek(Number(this.value));});
+  document.getElementById('saveWeekWindow').addEventListener('click',async function(){
+    const open=document.getElementById('adminOpen').value,lock=document.getElementById('adminLock').value,note=document.getElementById('adminNote').value;
+    try{const rr=await sb.rpc('admin_set_week_window',{p_week:week,p_opens_at:open?chicagoInputToISO(open):null,p_locks_at:chicagoInputToISO(lock),p_note:note||null});if(rr.error)throw rr.error;await refreshAll();const ar=await sb.rpc('admin_get_all_picks');ADMIN_CACHE=ar.data||[];renderAdminWeek(week);}catch(err){alert(err.message||err);}
+  });
+  document.querySelectorAll('.admin-pick').forEach(function(sel){sel.addEventListener('change',async function(){if(!sel.value)return;const rr=await sb.rpc('admin_set_pick',{p_player_id:sel.dataset.pid,p_week:Number(sel.dataset.week),p_team:sel.value,p_note:'edited by commissioner'});if(rr.error)alert(rr.error.message);else{await refreshAll();const ar=await sb.rpc('admin_get_all_picks');ADMIN_CACHE=ar.data||[];renderAdminWeek(week);}});});
+  document.querySelectorAll('.admin-del').forEach(function(btn){btn.addEventListener('click',async function(){if(!confirm('Delete this pick?'))return;const rr=await sb.rpc('admin_delete_pick',{p_player_id:btn.dataset.pid,p_week:Number(btn.dataset.week)});if(rr.error)alert(rr.error.message);else{await refreshAll();const ar=await sb.rpc('admin_get_all_picks');ADMIN_CACHE=ar.data||[];renderAdminWeek(week);}});});
+}
+
+document.getElementById('commishLink').addEventListener('click',openAdminSheet);
+document.querySelectorAll('.tab').forEach(function(tab){tab.addEventListener('click',function(){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});tab.classList.add('active');document.getElementById('view-'+tab.dataset.tab).classList.add('active');});});
+
+async function refreshAll(){
+  await loadAll();
+  ALL_PLAYERS=buildPlayers();
+  CURRENT_WEEK=computeCurrentWeek();
+  const alive=ALL_PLAYERS.filter(function(p){return p.alive;}).length;
+  document.getElementById('aliveCount').textContent=ALL_PLAYERS.length?alive:'–';
+  document.getElementById('totalCount').textContent='/ '+ALL_PLAYERS.length;
+  renderGrid();renderPlayers();renderMyPick();
+}
+sb.auth.onAuthStateChange(function(event,session){
+  if(event==='PASSWORD_RECOVERY'){PASSWORD_RECOVERY_ACTIVE=true;IDENTITY=session?{id:session.user.id,email:session.user.email}:null;showPasswordResetPanel();return;}
+  IDENTITY=session?{id:session.user.id,email:session.user.email}:null;
+  if(event!=='INITIAL_SESSION')refreshAll();
+});
+(async function init(){
+  try{await refreshAll();document.getElementById('loadingMsg').style.display='none';}
+  catch(err){console.error(err);document.getElementById('loadingMsg').style.display='none';const el=document.getElementById('errorMsg');el.style.display='block';el.textContent='Could not load the pool: '+(err.message||err);}
+})();
 </script>
 </body>
 </html>
