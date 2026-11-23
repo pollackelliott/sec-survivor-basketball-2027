@@ -52,6 +52,8 @@ After the user exists, add its UUID to:
 
 `public.admins(user_id)`
 
+Status: **Commissioner account configured and database authorization verified on November 23, 2026.**
+
 The commissioner UI is protected by database authorization, not by the email string shown in browser code.
 
 ## 4. Add the backend Supabase secret to GitHub Actions
