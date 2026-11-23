@@ -259,14 +259,20 @@ function openWeek(week){
   if(!rows.length)picks+='<div class="empty">'+((weekDeadline(week)&&new Date()<weekDeadline(week))?'Picks hidden':'No selections to display.')+'</div>';
   else Object.keys(counts).sort().forEach(function(team){picks+='<div class="pickstat-row"><span class="team-dot" style="--tc:'+teamColor(team)+';--tc2:'+teamSecondaryColor(team)+'"></span><div class="pickstat-name">'+esc(teamDisplay(team))+' <span class="opponent-context">'+esc(teamScheduleText(week,team))+'</span></div><div class="pickstat-count">'+counts[team]+'</div></div>';});
   picks+='</div>';
+  const revealed=!!(weekDeadline(week)&&new Date()>=weekDeadline(week));
+  const pickCount=function(team){return counts[team]||0;};
+  const gameAlphaName=function(g){
+    return [g.away,g.home].slice().sort(function(a,b){return a.localeCompare(b);})[0];
+  };
   let games='';
   ['midweek','saturday'].forEach(function(slot){
     const gs=weekGames(week).filter(function(g){return g.slot===slot;}).sort(function(a,b){
-      const at=a.tipoff_at?new Date(a.tipoff_at).getTime():null;
-      const bt=b.tipoff_at?new Date(b.tipoff_at).getTime():null;
-      if(at!=null&&bt!=null&&at!==bt)return at-bt;
-      if(at!=null&&bt==null)return -1;
-      if(at==null&&bt!=null)return 1;
+      if(revealed){
+        const pickDiff=Math.max(pickCount(b.away),pickCount(b.home))-Math.max(pickCount(a.away),pickCount(a.home));
+        if(pickDiff!==0)return pickDiff;
+      }
+      const alphaDiff=gameAlphaName(a).localeCompare(gameAlphaName(b));
+      if(alphaDiff!==0)return alphaDiff;
       return (a.away+' @ '+a.home).localeCompare(b.away+' @ '+b.home);
     });
     if(!gs.length)return;
