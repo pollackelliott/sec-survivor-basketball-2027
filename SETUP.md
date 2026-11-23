@@ -62,6 +62,8 @@ The browser uses the public `sb_publishable_...` key already stored in `app-conf
 
 The score-updater requires a modern Supabase **secret key**. Secret keys must never be committed.
 
+Status: **`SUPABASE_SECRET_KEY` configured in GitHub Actions and verified by a successful live score-sync job on November 23, 2026.**
+
 In Supabase:
 
 **Project Settings → API Keys → Secret keys**
@@ -137,3 +139,30 @@ Verify all of the following:
 - Score sync works with the GitHub secret.
 
 Only after this checklist passes should `build/sec-basketball-2027` be merged to `main`.
+
+
+## Verified QA — November 23, 2026
+
+The build branch and live Supabase project passed the following checks:
+
+- Real public Auth signup returned an immediate active session with Confirm email disabled.
+- Password login worked for the QA signup.
+- A real Week 1 pick submitted through the public `submit_pick` RPC.
+- The signed-in player saw their own pick.
+- The anonymous public board hid that pick before lock.
+- Week 1 was restored to closed after QA, and the throwaway user/pick were deleted.
+- Team reuse is rejected.
+- A team with a midweek bye is rejected for that week.
+- Commissioner pick set/delete functions work.
+- Commissioner weekly window override works.
+- Score correction recomputes derived strike totals.
+- Week 1 loss produces one strike without elimination.
+- A third-strike midweek loss causes immediate Tuesday/Wednesday elimination.
+- That state remains yellow/warning until Saturday resolves the weekly result.
+- A temporary lone survivor midweek does not end the pool.
+- A completed week can end with exactly one champion.
+- A completed week can end with zero survivors.
+- Missed pick at lock causes immediate elimination.
+- Score-sync GitHub Action authenticated with the repository secret and completed successfully without changing preseason results.
+
+Supabase's Leaked Password Protection advisor warning is expected on this project because that feature is available only on Pro and above. It is not a blocker for the Free-plan pool.
