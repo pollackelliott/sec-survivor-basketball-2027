@@ -4,5 +4,5 @@ window.SURVIVOR_APP_CONFIG = {
   year: 2027,
   weeks: 10,
   supabaseUrl: '',
-  supabaseAnonKey: ''
+  supabasePublishableKey: ''
 };
