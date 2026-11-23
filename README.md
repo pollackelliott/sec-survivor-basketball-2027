@@ -9,6 +9,7 @@ Development is currently on `build/sec-basketball-2027`. Do not treat `main` as 
 ## Canonical project documents
 
 - **[GAMEPLAY.md](GAMEPLAY.md)** — definitive gameplay and elimination rules.
+- **[SETUP.md](SETUP.md)** — launch, Auth, commissioner, Pages, and secret-key checklist.
 - **[data/README.md](data/README.md)** — exact schedule-grid contract.
 - `season.json` — season-level configuration.
 
