@@ -1,0 +1,28 @@
+name: QA Basketball Signup Flow
+
+on:
+  push:
+    branches:
+      - build/sec-basketball-2027
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sec-basketball-signup-qa
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Run real signup/pick/hiding QA
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/qa_signup_flow.py
