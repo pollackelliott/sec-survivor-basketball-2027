@@ -1,9 +1,6 @@
 name: Update SEC Basketball Survivor scores
 
 on:
-  push:
-    branches:
-      - build/sec-basketball-2027
   schedule:
     # Tuesday/Wednesday evenings (UTC), plus Saturday/Sunday window.
     - cron: '*/30 16-23 * * 2,3,6'
