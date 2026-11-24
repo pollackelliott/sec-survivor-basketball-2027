@@ -284,7 +284,7 @@ function openPlayer(id){
     let name='<span class="team-name empty">'+(revealed?'No pick':'Hidden')+'</span>',icon='<span class="result-icon pending">·</span>';
     if(pick){
       const lost=(status==='eliminated'||((status==='strike'||status==='warning')&&p.eliminatedWeek===w));
-      name='<span class="team-name '+(lost?'lost':'')+'">'+esc(teamDisplay(pick))+' <span class="opp-context">'+esc(teamScheduleText(w,pick))+'</span></span>';
+      name='<span class="team-name '+(lost?'lost':'')+'"><span class="game-team-name conference-chip" style="background:'+teamColor(pick)+';color:'+teamSecondaryColor(pick)+'">'+esc(teamDisplay(pick))+'</span> <span class="opp-context">'+esc(teamScheduleText(w,pick))+'</span></span>';
       icon=statusIcon(status);
     }else if(p.eliminatedWeek===w)icon='<span class="result-icon loss">✕</span>';
     timeline+='<div class="week-row"><div class="wk">W'+w+'</div><div class="team-chip">'+name+'</div>'+icon+'</div>';
